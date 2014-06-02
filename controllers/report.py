@@ -16,10 +16,336 @@ import logging
 logger = logging.getLogger("web2py.app.kvasir")
 crud.settings.formstyle = formstyle_bootstrap_kvasir
 
+from skaldship.statistics import db_statistics, adv_db_statistics, graphs_index
 
 @auth.requires_login()
 def index():
     return dict()
+
+@auth.requires_login()
+def report():
+    """
+    Genereate a HTML-report with fields from statistics, hosts, vulns, and summaries from the wiki
+    """
+
+    response.files.append(URL(request.application, 'static', 'js/jquery.tagcloud-2.js'))
+    response.files.append(URL(request.application, 'static', 'js/highcharts.js'))
+
+    statistics = db_statistics()
+    adv_stats = adv_db_statistics()
+    graphs = graphs_index()
+    
+    customer = settings.customer 
+    assessment = settings.assessment_typed
+    start_date = settings.start_date or 'START DATE'
+    end_date = settings.end_date or 'END DATE'
+
+    # grab the filter type and value if provided or from the session
+    if session.hostfilter is None:
+        f_type  = request.vars.f_type or None
+        f_value = request.vars.f_value or None
+    else:
+        f_type  = session.hostfilter[0]
+        f_value = session.hostfilter[1]
+
+    # this is a little hack to ensure a record is either blank or None
+    # use it as "if variable not in notin:"
+    notin = [ None, '' ]
+    unknown_cpeid_counter = 0
+
+    hosts = []
+    vulnerabilities = {}
+    # go through each host, adding the os, services and vulns accordingly
+    query = create_hostfilter_query([(f_type, f_value), False])
+    for host_rec in db(query).select():
+        host = {}
+        host['ipv4'] = host_rec.f_ipv4
+        host['asset_group'] = host_rec.f_asset_group
+        if host_rec.f_ipv6:
+            host['ipv6'] = host_rec.f_ipv6
+        if host_rec.f_macaddr:
+            host['macaddr'] = host_rec.f_macaddr
+        if host_rec.f_hostname:
+            host['hostname'] = host_rec.f_hostname.decode('utf-8')
+        if host_rec.f_netbios_name:
+            host['netbios_name'] = host_rec.f_netbios_name.decode('utf-8')
+
+        # build the os information using the highest certainty record
+        highest = (0, None)
+        for os_rec in db(db.t_host_os_refs.f_hosts_id == host_rec.id).select():
+            if os_rec.f_certainty > highest[0]:
+                highest = (os_rec.f_certainty, os_rec)
+
+        if highest[0] > 0:
+            # add os element to the host
+            record = highest[1]
+            host['os']['certainty'] = str(highest[0])
+            if record.f_class not in notin:
+                host['os']['class'] = record.f_class
+            if record.f_family not in notin:
+                host['os']['family'] = record.f_family
+
+            # since some os records may not have a cpe id we'll mask them with
+            # using their title, replacing spaces with underscores
+            t_os_rec = db.t_os[record.f_os_id]
+            if t_os_rec.f_cpename in notin:
+                cpeid = t_os_rec.f_title.replace(' ', '_')
+            else:
+                cpeid = t_os_rec.f_cpename
+
+            host['os']['id'] = cpeid
+
+            # if the id isn't in os_records, add it
+            if len(os_xml.findall('.//os[@id="%s"]' % (os.get('id', None)))) < 1:
+                os_rec = db.t_os[highest[1].f_os_id]
+                host['os']['id'] = cpeid
+                host['os']['title'] = os_rec.f_title
+
+                if os_rec.f_vendor not in notin:
+                    host['os']['vendor'] = os_rec.f_vendor
+
+                if os_rec.f_product not in notin:
+                    host['os']['product'] = os_rec.f_product
+
+                if os_rec.f_version not in notin:
+                    host['os']['version'] = os_rec.f_version
+
+                if os_rec.f_update not in notin:
+                    host['os']['update'] = os_rec.f_update
+
+                if os_rec.f_edition not in notin:
+                    host['os']['edition'] = os_rec.f_edition
+
+                if os_rec.f_language not in notin:
+                    host['os']['language'] = os_rec.f_language
+
+        # snmp strings
+        snmp_recs = db(db.t_snmp.f_hosts_id == host_rec.id).select()
+        if len(snmp_recs) > 0:
+            host['snmps'] = []
+            for record in snmp_recs:
+                snmp = {}
+                if record.f_community not in notin:
+                    snmp['community'] = record.f_community.decode('utf-8')
+                    snmp['version'] = record.f_version
+                    snmp['access'] = record.f_access
+                    host['snmps'].append(snmp)
+
+        # netbios information
+        netb_record = db(db.t_netbios.f_hosts_id == host_rec.id).select().first() or None
+        if netb_record:
+            host['netbios'] = {}
+            if netb_record.f_type not in notin:
+                host['netbios']['type'] =  netb_record.f_type
+            if netb_record.f_domain not in notin:
+                host['netbios']['domain'] =  netb_record.f_domain.decode('utf-8')
+            if netb_record.f_lockout_limit not in notin:
+                host['netbios']['lockout_limit'] =  str(netb_record.f_lockout_limit)
+            if netb_record.f_lockout_duration not in notin:
+                host['netbios']['lockout_duration'] =  str(netb_record.f_lockout_duration)
+
+            if netb_record.f_advertised_names is not None:
+                for name in netb_record.f_advertised_names:
+                    host['netbios']['advertised_name'] = name.decode('utf-8')
+
+        # build the services and vulnerabilities
+        host['services'] = []
+        for svc_rec in db(db.t_services.f_hosts_id == host_rec.id).select():
+            service = {}
+            service['proto'] = svc_rec.f_proto
+            service['number'] = svc_rec.f_number
+
+            if svc_rec.f_name not in notin:
+                service['name'] = svc_rec.f_name.decode('utf-8')
+
+            if svc_rec.f_banner not in notin:
+                service['banner'] = svc_rec.f_banner.decode('utf-8')
+
+            # service configuration records
+            svc_info_recs = db(db.t_service_info.f_services_id == svc_rec.id).select()
+            if len(svc_info_recs) > 0:
+                service['configs'] = []
+                for info_rec in svc_info_recs:
+                    config = {}
+                    if info_rec.f_name not in notin:
+                        config['name'] = info_rec.f_name
+                        if info_rec.f_text not in notin:
+                            config['text'] = info_rec.f_text.decode('utf-8')
+                    service['configs'].append(config)
+
+            # vulnerabilities
+            svc_vuln_recs = db(db.t_service_vulns.f_services_id == svc_rec.id).select()
+            if len(svc_vuln_recs) > 0:
+                service['vulns'] = []
+                for vuln_rec in svc_vuln_recs:
+                    vuln = {} 
+                    vuln['status'] = vuln_rec.f_status
+                    vuln['proof'] = vuln_rec.f_proof
+
+                    vulndata = db.t_vulndata[vuln_rec.f_vulndata_id]
+                    vuln['id'] = vulndata.f_vulnid
+                    vuln['title'] = vulndata.f_title
+                    vuln['severity'] = str(vulndata.f_severity)
+                    vuln['pci_sev'] = str(vulndata.f_pci_sev)
+                    vuln['cvss_score'] = str(vulndata.f_cvss_score)
+                    vuln['cvss_metric'] = cvss_metrics(vulndata)
+                    vuln['description'] = vulndata.f_description
+                    vuln['solution'] = vulndata.f_solution
+
+                    # find vulnerability references and add them
+                    vuln_refs = db(db.t_vuln_references.f_vulndata_id == vulndata.id).select()
+                    if len(vuln_refs) > 0:
+                        vuln['refs'] = []
+                        for ref_rec in vuln_refs:
+                            ref = {}
+                            record = db.t_vuln_refs[ref_rec.f_vuln_ref_id]
+                            ref['source'] = record.f_source
+                            ref['text'] = record.f_text.decode('utf-8')
+                            vuln['refs'].append(ref)
+
+                    service['vulns'].append(vuln)
+                    
+                    vuln['hosts'] = []
+                    vulnhost = host
+                    vulnhost['svcproto'] = service['proto']
+                    vulnhost['svcnumber'] = service['number']
+                    vulnhost['status'] = vuln_rec.f_status
+                    vulnhost['proof'] = vuln_rec.f_proof
+                    vulnhost['url'] = 'todo'
+                    if svc_rec.f_name not in notin:
+                        vulnhost['svcname'] = svc_rec.f_name.decode('utf-8')
+                    if svc_rec.f_banner not in notin:
+                        vulnhost['svcbanner'] = svc_rec.f_banner.decode('utf-8')
+                    id = str(vuln_rec.f_vulndata_id)
+                    if id not in vulnerabilities: 
+                        vulnerabilities[id] = vuln
+                    vulnerabilities[id]['hosts'].append(vulnhost)
+            host['services'].append(service)
+
+            # accounts
+            accounts = db(db.t_accounts.f_services_id == svc_rec.id).select()
+            if len(accounts) > 0:
+                host['accounts'] = []
+                accounts_xml = etree.SubElement(service_xml, 'accounts')
+                for acct_rec in accounts:
+                    account = {}
+
+                    if acct_rec.f_username not in notin:
+                        account['username'] = acct_rec.f_username.decode('utf-8')
+
+                    if acct_rec.f_fullname not in notin:
+                        account['fullname'] = acct_rec.f_fullname.decode('utf-8')
+
+                    if acct_rec.f_password not in notin:
+                        account['password'] = acct_rec.f_password.decode('utf-8')
+
+                    if acct_rec.f_hash1 not in notin:
+                        account['hash1'] = acct_rec.f_hash1
+
+                    if acct_rec.f_hash1_type not in notin:
+                        account['hash1_type'] = acct_rec.f_hash1_type
+
+                    if acct_rec.f_hash2 not in notin:
+                        account['hash2'] = acct_rec.f_hash2
+
+                    if acct_rec.f_hash2_type not in notin:
+                        account['hash2_type'] = acct_rec.f_hash2_type
+
+                    if acct_rec.f_uid not in notin:
+                        account['uid'] = acct_rec.f_uid
+
+                    if acct_rec.f_gid not in notin:
+                        account['gid'] = acct_rec.f_gid
+
+                    if acct_rec.f_level not in notin:
+                        account['level'] = acct_rec.f_level
+
+                    if acct_rec.f_domain not in notin:
+                        account['domain'] = acct_rec.f_domain.decode('utf-8')
+
+                    if acct_rec.f_description not in notin:
+                        account['description'] = acct_rec.f_description.decode('utf-8')
+                    host['accounts'].append(account)
+        hosts.append(host)
+    add_hosts = AddModal(db.t_hosts, 'Add Host', 'Add Host', 'Add Host',cmd = 'hosttable.fnReloadAjax();' )
+    response.files.append(URL(request.application,'static','js/jquery.sparkline.js'))
+    return dict(statistics=statistics, vulnerabilities=vulnerabilities, adv_stats=adv_stats, graphs=graphs, hosts=hosts, add_hosts=add_hosts, hostfilter=session.hostfilter, listjson=str(list()).replace('\"','\\\"').replace('\'','\"').replace('L, ',', ').replace('None','null'))
+
+@auth.requires_login()
+def list():
+    tot_vuln = 0
+    tot_hosts = 0
+
+    """
+    # load all the vulndata from service_vulns into a dictionary
+    # so we only have to query the memory variables instead of
+    # the database each time. We need to collect:
+    # svc_vulndata[f_service_id] = (f_vulnid, f_severity, f_cvss_score)
+    """
+
+    # build the query variable.. first all hosts then check
+    # if a hostfilter is applied
+    q = (db.t_hosts.id > 0)
+    q = create_hostfilter_query(session.hostfilter, q)
+
+    aaData = []
+    rows = db(q).select(db.t_hosts.ALL, db.t_host_os_refs.f_certainty, db.t_os.f_title, db.auth_user.username,
+                        left=(db.t_host_os_refs.on(db.t_hosts.id==db.t_host_os_refs.f_hosts_id),
+                              db.t_os.on(db.t_os.id==db.t_host_os_refs.f_os_id),
+                              db.auth_user.on(db.t_hosts.f_engineer==db.auth_user.id)),
+                        orderby=db.t_hosts.id|~db.t_host_os_refs.f_certainty)
+    # datatable formatting is specific, crud results are not
+    seen = set()
+    for r in rows:
+        if r.t_hosts.id not in seen and not seen.add(r.t_hosts.id): # kludge way to select only rows per host with the best OS-guess
+            spanflags = []
+            if r.t_hosts.f_confirmed:
+                confirmed = 'hosts_select_confirmed'
+                spanflags.append('<span class="badge"><i class="icon-check"></i></span>')
+            else:
+                confirmed = 'hosts_select_unconfirmed'
+
+            if r.t_hosts.f_accessed:
+                spanflags.append('<span class="badge badge-success"><i class="icon-heart"></i></span>')
+            if r.t_hosts.f_followup:
+                spanflags.append('<span class="badge badge-important"><i class="icon-flag"></i></span>')
+
+            confirmed = '<div class="%s">%s</div>' % (confirmed, " ".join(spanflags))
+
+            if r.t_hosts.f_ipv4:
+                ipv4 = A(r.t_hosts.f_ipv4, _id='ipv4', _href=URL('detail', extension='html', args=[r.t_hosts.id]), _target="host_detail_%s" % (r.t_hosts.id)).xml()
+            else:
+                ipv4 = ""
+
+            if r.t_os.f_title is None:
+                os = "Ukjent"
+            else:
+                os = r.t_os.f_title
+
+            atxt = {
+                 '0': confirmed,
+                 '1': ipv4,
+                 '2': r.t_hosts.f_service_count,
+                 '3': r.t_hosts.f_vuln_count,
+                 '4': "<span class=\"severity_sparkline\" values=\"%s\"></span>" % (r.t_hosts.f_vuln_graph),
+                 '5': r.t_hosts.f_exploit_count,
+                 '6': r.t_hosts.f_hostname,
+                 '7': r.t_hosts.f_netbios_name,
+                 '8': os,
+                 '9': r.t_hosts.f_asset_group,
+                 'DT_RowId': "%s" % (r.t_hosts.id),
+            }
+
+            aaData.append(atxt)
+            tot_hosts += 1
+
+    result = { 'sEcho': request.vars.sEcho,
+               'iTotalRecords': len(aaData),
+               'iTotalDisplayRecords': len(aaData),
+               'aaData': aaData,
+               }
+
+    return result
 
 @auth.requires_login()
 def spreadsheet():

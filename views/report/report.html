@@ -1,0 +1,525 @@
+{{extend 'layout.html'}}
+
+<div class="row-fluid"> 
+  <div class="span8">
+    <div class="box-container">
+      <div class="span6">
+        <div class="widget-box">
+          <div class="widget-title">
+            <h5>Top Host {{if settings.use_cvss:}}CVSS Scores{{else:}}Severities{{pass}}</h5>
+          </div>
+          <div class="widget-content">
+            <div id="chart_host_sev"></div>
+          </div>
+        </div>
+      </div>
+      <div class="span6">
+        <div class="widget-box">
+          <div class="widget-title">
+            <h5>Vulnerabilities by {{if settings.use_cvss:}}CVSS Score{{else:}}Severity{{pass}}</h5>
+          </div>
+          <div class="widget-content">
+            <div id="chart_vuln_sev"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="box-container">
+      <div class="span6">
+        <div class="widget-box">
+          <div class="widget-title">
+            <h5>OTG graf by {{if settings.use_cvss:}}CVSS Score{{else:}}Severity{{pass}}</h5>
+          </div>
+          <div class="widget-content">
+            <div id="chart_vuln_cat"></div>
+          </div>
+        </div>
+      </div>
+      <div class="span6">
+        <div class="widget-box">
+          <div class="widget-title">
+            <h5>En annen graf by {{if settings.use_cvss:}}CVSS Score{{else:}}Severity{{pass}}</h5>
+          </div>
+          <div class="widget-content">
+            <div id="chart_vuln_new"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<script>
+
+$(function () {
+  $('#chart_host_sev').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+          text: ''
+        },
+        credits: {enabled: 0},
+        xAxis: {
+            gridLineWidth: 1,
+            categories: ['0', '1','2','3','4','5','6','7','8','9','10'],
+          title: {text: 'Alvorlighetsgrad'}
+        },
+        yAxis: {
+          title: {text: 'Antall maskiner'}
+          },
+        legend: { enabled: false },
+        dataLabels: {
+          enabled: true
+        },
+        series: [{
+          name: 'Maskiner',
+          data: [ {{=XML(graphs['top_host_sev_count'])}} ]
+        }]
+  });
+  
+  $('#chart_vuln_cat').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+          text: ''
+        },
+        credits: {enabled: 0},
+        xAxis: {
+            gridLineWidth: 1,
+            categories: [
+            '<a href="https://www.owasp.org/index.php/Testing_Information_Gathering">Info</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_Error_Handling">Err</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_business_logic">BL</a>',
+            '<a href="https://www.owasp.org/index.php/Client_Side_Testing">Cli</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_Session_Management">Sess</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_weak_Cryptography">Cryp</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_configuration_management">Conf</a>',
+            '<a href="https://www.owasp.org/index.php/Denial_of_Service">DOS</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_authentication">Authn</a>', 
+            '<a href="https://www.owasp.org/index.php/Testing_for_Data_Validation">Inp</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_Authorization">Authz</a>', 
+            ],
+          title: {text: 'Kategorier i OTG'}
+          },
+        yAxis: {
+          title: {text: 'Antall sårbarheter'}
+          },
+        legend: { enabled: false },
+        dataLabels: {
+          enabled: true
+        },
+        series: [{
+          name: 'Sårbarheter',
+          data: [ {{=XML(graphs['vuln_by_sev_count'])}} ]
+        }]
+  });
+
+  $('#chart_vuln_new').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+          text: ''
+        },
+        credits: {enabled: 0},
+        xAxis: {
+            gridLineWidth: 1,
+            categories: [
+            '<a href="https://www.owasp.org/index.php/Testing_Information_Gathering">Info</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_Error_Handling">Err</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_business_logic">BL</a>',
+            '<a href="https://www.owasp.org/index.php/Client_Side_Testing">Cli</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_Session_Management">Sess</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_weak_Cryptography">Cryp</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_configuration_management">Conf</a>',
+            '<a href="https://www.owasp.org/index.php/Denial_of_Service">DOS</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_authentication">Authn</a>', 
+            '<a href="https://www.owasp.org/index.php/Testing_for_Data_Validation">Inp</a>',
+            '<a href="https://www.owasp.org/index.php/Testing_for_Authorization">Authz</a>', 
+            ],
+          title: {text: 'Kategorier i OTG'}
+          },
+        yAxis: {
+          title: {text: 'Antall sårbarheter'}
+          },
+        legend: { enabled: false },
+        dataLabels: {
+          enabled: true
+        },
+        series: [{
+          name: 'Sårbarheter',
+          data: [ {{=XML(graphs['vuln_by_sev_count'])}} ]
+        }]
+  });
+
+  $('#chart_vuln_sev').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+          text: ''
+        },
+        credits: {enabled: 0},
+        xAxis: {
+            gridLineWidth: 1,
+            categories: ['0', '1','2','3','4','5','6','7','8','9','10'],
+          title: {text: 'Alvorlighetsgrad'}
+          },
+        yAxis: {
+          title: {text: 'Antall sårbarheter'}
+          },
+        legend: { enabled: false },
+        dataLabels: {
+          enabled: true
+        },
+        series: [{
+          name: 'Sårbarheter',
+          data: [ {{=XML(graphs['vuln_by_sev_count'])}} ]
+        }]
+  });
+
+});
+</script>
+
+  <div class="widget-box">
+    <div class="widget-title">
+      <h5>Sårbarheter med høy risiko (7+)</h5>
+    </div>
+    <div class="widget-content">
+      <p align="right"><a target="vulncloud" href="{{=URL('stats', 'vulncloud')}}">Show All</a></p>
+      <div id="vulncloud">
+          Loading...
+      </div>
+    </div>
+  </div>
+
+<script type="text/javascript">
+    jQuery(function() {
+        jQuery.getJSON("{{=URL('stats', 'vulncloud.json', args='8')}}", function(data) {
+            var d = data['vulncloud']
+            jQuery("#vulncloud").tagCloud(d, {'click': function(tag, event) {
+                popup("{{=URL(request.application, 'vulns', 'vulninfo_by_vulnid')}}/" + tag, 'vulninfo_by_vulnid' + tag);
+            }
+        } );
+      } );
+    } );
+</script>
+</div>
+
+<div class="span4">
+  <div class="widget-box">
+    <div class="widget-title">
+      <h5>Summary</h5>
+    </div>
+    <div class="widget-content">
+      <div id="stats" class="portlet-content">
+        <table class="table table-bordered table-hover">
+          <tr>
+            <th>Antall maskiner</th>
+            <td>{{=statistics['hosts']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Bekreftede maskiner</td>
+            <td>{{=statistics['hosts_confirmed']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Ubekreftede maskiner</td>
+            <td>{{=statistics['hosts_unconfirmed']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Kompromitterte maskiner</td>
+            <td>{{=statistics['hosts_accessed']}}
+            </td>
+          </tr>
+
+          <tr>
+            <td><b>Tjenester/Sårbarheter</b></td><td></td>
+          </tr>
+          <tr>
+            <td>Antall tjenester</td>
+            <td>{{=statistics['services']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Antall sårbarheter</td>
+            <td>{{=statistics['service_vulns']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Maskiner med sårbarheter</td>
+            <td>{{=statistics['vuln_host_count']}} ({{=statistics['vuln_host_pct']}})
+            </td>
+          </tr>
+          <tr>
+            <td>Maskiner med høyrisiko sårbarheter (=> 7)</td>
+            <td>{{=statistics['high_vuln_host_count']}} ({{=statistics['high_vuln_host_pct']}})
+            </td>
+          </tr>
+          <tr>
+            <td>Tjenester med sårbarheter</td>
+            <td>{{=statistics['services_with_vulns']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Tjenester med høyrisiko sårbarheter (=> 7)</td>
+            <td>{{=statistics['services_with_high_vulns']}}
+            </td>
+          </tr>
+
+          <tr>
+            <td>Antall identifiserte brukerkontoer</td>
+            <td>{{=statistics['accounts']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Kompromitterte brukerkontoer</td>
+            <td>{{=statistics['compromised_accounts']}}
+            </td>
+          </tr>
+          <tr>
+            <td>Passord</td>
+            <td>{{=statistics['passwords']}}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+    <div class="widget-box">
+        <div class="widget-content">
+          <table class="table table-bordered table-hover">
+            <tr>
+              <td width="50%">Domains Discovered</td>
+              <td>{{for dom in adv_stats['domains']:}}<a target="_blank" href="{{=URL('netbios', 'domain_detail', vars={'domain':dom})}}">{{=dom}}</a></br>{{pass}}
+              </td>
+            </tr>
+            <tr>
+              <td>Knekte passord</td>
+              <td>ROOT: {{=adv_stats['ROOT']}}<br>
+              Administrator: {{=adv_stats['Administrator']}}<br>
+              Andre brukere: {{=adv_stats['USER']}}
+              </td>
+            </tr>
+            <tr>
+              <td>SNMP Tilganger</td>
+              <td>READ: {{=adv_stats['SNMP_read']}}<br>
+              WRITE: {{=adv_stats['SNMP_write']}}
+              </td>
+            </tr>
+          </table>
+        </div>
+    </div>
+
+  <div class="widget-box">
+        <div class="widget-content">
+            <table class="table table-bordered table-hover">
+               <thead>
+                 <tr>
+                     <th>Gruppering av maskiner</th>
+                     <th>Antall maskiner</th>
+                 </tr>
+               </thead>
+               <tbody>
+               {{
+                  host_count=db.t_hosts.f_asset_group.count()
+                  for row in db().select(db.t_hosts.f_asset_group, host_count, groupby=db.t_hosts.f_asset_group):
+               }}
+                 <tr>
+                     <td>{{=row['t_hosts.f_asset_group']}}</td>
+                     <td>{{=row[host_count]}}</td>
+                 </tr>
+              {{pass}}
+              </tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget-box">
+        <div class="widget-title">
+          <h5>Topp15 Tjenester</h5>
+        </div>
+        <div class="widget-content">
+            <table class="table table-bordered table-hover">
+               <thead>
+                 <tr>
+                     <th>Protokoll</th>
+                     <th>Navn</th>
+                     <th>Antall</th>
+                 </tr>
+               </thead>
+               <tbody>
+                {{
+                  svc_count=db.t_services.f_proto.count()
+                  for row in db().select(db.t_services.f_proto, db.t_services.f_number, db.t_services.f_name, svc_count, groupby=db.t_services.f_proto|db.t_services.f_number|db.t_services.f_name,orderby=~svc_count,limitby=(0,15)):
+                }}
+                 <tr>
+                     <td>{{="%s/%s" % (row['t_services.f_proto'], row['t_services.f_number'])}}</td>
+                     <td>{{=row['t_services.f_name']}}</td>
+                     <td>{{=row[svc_count]}}</td>
+                 </tr>
+                {{pass}}
+              </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="table">
+        <table cellpadding="0" cellspacing="0" border="0" class="datatable" id="hosttable" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%">Merknad</th>
+                    <th>IPv4</th>
+                    <th width="5%">Tjenester</th>
+                    <th width="5%">Sårbarheter</th>
+                    <th width="8%">Sårbarhets Graf</th>
+                    <th width="5%">Exploits</th>
+                    <th>Hostname</th>
+                    <th>NetBIOS</th>
+                    <th>OS</th>
+                    <th>Gruppe</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <script src="/kvasir/static/js/jquery.mockjax.js"></script>
+    
+    <script type="text/javascript" language="javascript">
+    $.mockjax({
+                url: "list.json",
+                responseTime: 0,
+                responseText: {{=XML(listjson)}}
+            });
+           
+
+    var hosttable;
+    function doSpark() {
+        jQuery('.severity_sparkline').sparkline('html', { type: 'bar', barColor: 'red',
+            colorMap: [ "grey", "grey", "grey", "blue", "blue", "magenta", "magenta", "red", "red", "red" ] } );
+    }
+    
+    jQuery(document).ready(function() {
+        hosttable = $('#hosttable').dataTable( {
+            "sAjaxSource": "list.json",
+            "bDeferRender": true,
+            "sDom": 'TC<"clear">lfrtip',
+            "oTableTools": {
+                "sRowSelect": "multi",
+                "sSelectedClass": "row_selected",
+                "aButtons": []
+            },
+            "fnDrawCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+                //jQuery('#hosttable tbody tr td:nth-child(7)').css("color", "red").css("font-weight", "bold"); //Column 7 is exploits
+                doSpark();
+            },
+            "aoColumnDefs": [
+                { "sType": "ip-address", "aTargets": [ 1 ] },
+                { "sSortDataType": "formatted-num", "aTargets": [ 5 ] },
+                { "sType": "numeric", "aTargets": [ 2, 3 ] },
+                { "sClass": "center", "aTargets": [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ] },
+                { "bSortable": false, "aTargets": [ 0, 4 ] },
+            ],
+            "aaSorting": [[ 1, "asc" ]],
+        } );
+        $.extend( $.fn.dataTableExt.oStdClasses, {
+            "sWrapper": "dataTables_wrapper form-inline",
+        } );
+    } );
+    </script>
+
+<h2>Maskiner med sårbarheter</h2>
+</div>
+{{for host in hosts:}}
+{{dohost=1}}
+{{for service in host['services']:}}
+{{if 'vulns' in service and dohost:}}
+  <div class="widget-box">
+        <div class="widget-title">
+          <h5>{{=host['ipv4']}}{{if 'hostname' in host:}} - {{=host['hostname']}}{{pass}}</h5>
+        </div>
+        <div class="widget-content">
+            <table class="table table-bordered table-hover">
+               <thead>
+                 <tr>
+                     <th>Sårbarhet</th>
+                     <th>Tjeneste</th>
+                     <th>Risiko</th>
+                 </tr>
+               </thead>
+               <tbody>
+                {{for service in host['services']:}}
+                {{if 'vulns' in service:}}
+                 {{for vuln in service['vulns']:}} 
+                 <tr>
+                     <td>{{=vuln['title']}}</td>
+                     <td>{{=service['name']}} ({{=service['proto']}}/{{=service['number']}})</td>
+                     <td>{{=vuln['severity']}}</td>
+                 </tr>
+                {{pass}}
+                {{pass}}
+                {{pass}}
+              </tbody>
+            </table>
+        </div>
+    </div>
+  {{dohost=0}}
+{{pass}}
+{{pass}}
+{{pass}}
+
+<h2>Identifiserte sårbarheter</h2>
+</div>
+{{for vulnid in vulnerabilities:}}
+{{vuln = vulnerabilities[vulnid]}}
+  <div class="widget-box">
+        <div class="widget-title">
+          <h5>{{=vuln['title']}}</h5>
+        </div>
+        <div class="widget-content">
+        <table>
+          <tbody>
+            <tr>
+            <td><b>Beskrivelse: </b></td>
+            <td>{{=vuln['description']}}</td>
+            </tr>
+            <tr>
+            <td><b>Tiltak: </b></td>
+            <td>{{=vuln['solution']}}</td>
+            </tr>
+            {{if 'refs' in vuln:}}
+            <tr>
+            <td><b>Referanser: </b></td>
+            <td>{{for ref in vuln['refs']:}}<b>{{=ref['source']}}:</b></br>{{=ref['text']}}{{pass}}</td>
+            </tr>
+            {{pass}}
+          </tbody>
+        </table>
+            <table class="table table-bordered table-hover">
+               <thead>
+                 <tr>
+                     <th>Hostname</th>
+                     <th>Protokoll</th>
+                     <th>IP</th>
+                     <th>URL</th>
+                     <th>Detaljer</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {{for host in vuln['hosts']:}} 
+                 <tr>
+                     <td>{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</td>
+                     <td>{{=host['svcname']}} ({{=host['svcproto']}}/{{=host['svcnumber']}})</td>
+                     <td>{{=host['ipv4']}}</td>
+                     <td>{{=host['url']}}</td>
+                     <td>{{=host['proof']}}</td>
+                 </tr>
+                {{pass}}
+              </tbody>
+            </table>
+        </div>
+    </div>
+{{pass}}
