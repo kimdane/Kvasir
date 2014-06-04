@@ -10,6 +10,10 @@
 ## Author: Kurt Grutzmacher <kgrutzma@cisco.com>
 ##--------------------------------------#
 
+## import those nice ready-made functions that make up a good report
+execfile(os.path.join(request.folder,'controllers/hosts.py'))
+execfile(os.path.join(request.folder,'controllers/vulns.py'))
+
 from skaldship.general import cvss_metrics
 from skaldship.hosts import create_hostfilter_query
 import logging
@@ -34,8 +38,8 @@ def report():
     statistics = db_statistics()
     adv_stats = adv_db_statistics()
     graphs = graphs_index()
-    
-    customer = settings.customer 
+
+    customer = settings.customer
     assessment = settings.assessment_typed
     start_date = settings.start_date or 'START DATE'
     end_date = settings.end_date or 'END DATE'
@@ -178,7 +182,7 @@ def report():
             if len(svc_vuln_recs) > 0:
                 service['vulns'] = []
                 for vuln_rec in svc_vuln_recs:
-                    vuln = {} 
+                    vuln = {}
                     vuln['status'] = vuln_rec.f_status
                     vuln['proof'] = vuln_rec.f_proof
 
@@ -204,7 +208,7 @@ def report():
                             vuln['refs'].append(ref)
 
                     service['vulns'].append(vuln)
-                    
+
                     vuln['hosts'] = []
                     vulnhost = host
                     vulnhost['svcproto'] = service['proto']
@@ -217,7 +221,7 @@ def report():
                     if svc_rec.f_banner not in notin:
                         vulnhost['svcbanner'] = svc_rec.f_banner.decode('utf-8')
                     id = str(vuln_rec.f_vulndata_id)
-                    if id not in vulnerabilities: 
+                    if id not in vulnerabilities:
                         vulnerabilities[id] = vuln
                     vulnerabilities[id]['hosts'].append(vulnhost)
             host['services'].append(service)

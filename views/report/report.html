@@ -1,6 +1,6 @@
 {{extend 'layout.html'}}
 
-<div class="row-fluid"> 
+<div class="row-fluid">
   <div class="span8">
     <div class="box-container">
       <div class="span6">
@@ -75,7 +75,7 @@ $(function () {
           data: [ {{=XML(graphs['top_host_sev_count'])}} ]
         }]
   });
-  
+
   $('#chart_vuln_cat').highcharts({
         chart: {
             type: 'column'
@@ -95,9 +95,9 @@ $(function () {
             '<a href="https://www.owasp.org/index.php/Testing_for_weak_Cryptography">Cryp</a>',
             '<a href="https://www.owasp.org/index.php/Testing_for_configuration_management">Conf</a>',
             '<a href="https://www.owasp.org/index.php/Denial_of_Service">DOS</a>',
-            '<a href="https://www.owasp.org/index.php/Testing_for_authentication">Authn</a>', 
+            '<a href="https://www.owasp.org/index.php/Testing_for_authentication">Authn</a>',
             '<a href="https://www.owasp.org/index.php/Testing_for_Data_Validation">Inp</a>',
-            '<a href="https://www.owasp.org/index.php/Testing_for_Authorization">Authz</a>', 
+            '<a href="https://www.owasp.org/index.php/Testing_for_Authorization">Authz</a>',
             ],
           title: {text: 'Kategorier i OTG'}
           },
@@ -133,9 +133,9 @@ $(function () {
             '<a href="https://www.owasp.org/index.php/Testing_for_weak_Cryptography">Cryp</a>',
             '<a href="https://www.owasp.org/index.php/Testing_for_configuration_management">Conf</a>',
             '<a href="https://www.owasp.org/index.php/Denial_of_Service">DOS</a>',
-            '<a href="https://www.owasp.org/index.php/Testing_for_authentication">Authn</a>', 
+            '<a href="https://www.owasp.org/index.php/Testing_for_authentication">Authn</a>',
             '<a href="https://www.owasp.org/index.php/Testing_for_Data_Validation">Inp</a>',
-            '<a href="https://www.owasp.org/index.php/Testing_for_Authorization">Authz</a>', 
+            '<a href="https://www.owasp.org/index.php/Testing_for_Authorization">Authz</a>',
             ],
           title: {text: 'Kategorier i OTG'}
           },
@@ -209,7 +209,7 @@ $(function () {
 <div class="span4">
   <div class="widget-box">
     <div class="widget-title">
-      <h5>Summary</h5>
+      <h5>{{=T("Summary")}}</h5>
     </div>
     <div class="widget-content">
       <div id="stats" class="portlet-content">
@@ -387,21 +387,21 @@ $(function () {
         </table>
     </div>
     <script src="/kvasir/static/js/jquery.mockjax.js"></script>
-    
+
     <script type="text/javascript" language="javascript">
     $.mockjax({
                 url: "list.json",
                 responseTime: 0,
                 responseText: {{=XML(listjson)}}
             });
-           
+
 
     var hosttable;
     function doSpark() {
         jQuery('.severity_sparkline').sparkline('html', { type: 'bar', barColor: 'red',
             colorMap: [ "grey", "grey", "grey", "blue", "blue", "magenta", "magenta", "red", "red", "red" ] } );
     }
-    
+
     jQuery(document).ready(function() {
         hosttable = $('#hosttable').dataTable( {
             "sAjaxSource": "list.json",
@@ -453,7 +453,7 @@ $(function () {
                <tbody>
                 {{for service in host['services']:}}
                 {{if 'vulns' in service:}}
-                 {{for vuln in service['vulns']:}} 
+                 {{for vuln in service['vulns']:}}
                  <tr>
                      <td>{{=vuln['title']}}</td>
                      <td>{{=service['name']}} ({{=service['proto']}}/{{=service['number']}})</td>
@@ -472,7 +472,7 @@ $(function () {
 {{pass}}
 
 <h2>Identifiserte sårbarheter</h2>
-</div>
+
 {{for vulnid in vulnerabilities:}}
 {{vuln = vulnerabilities[vulnid]}}
   <div class="widget-box">
@@ -509,7 +509,7 @@ $(function () {
                  </tr>
                </thead>
                <tbody>
-                 {{for host in vuln['hosts']:}} 
+                 {{for host in vuln['hosts']:}}
                  <tr>
                      <td>{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</td>
                      <td>{{=host['svcname']}} ({{=host['svcproto']}}/{{=host['svcnumber']}})</td>
@@ -523,3 +523,5 @@ $(function () {
         </div>
     </div>
 {{pass}}
+
+{{=auth.wiki('ledelsens-oppsummering')}}
