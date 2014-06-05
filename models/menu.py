@@ -78,6 +78,7 @@ response.menu = [
      [
          (T('Browse Data Directory'), False, URL(_a, 'default', 'data_dir'), []),
          (T('Customer XML'),URL(_a,'report','customer_xml.xml')==URL(),URL(_a,'report','customer_xml.xml'),[]),
+         (T('Customer HTML Report'),URL(_a,'report','report.html')==URL(),URL(_a,'report','report.html'),[]),
          (T('Stats XLS'),URL(_a,'report','spreadsheet')==URL(),URL(_a,'report','spreadsheet'),[]),
          (T('Wiki'),URL(_a,'default','wiki')==URL(),URL(_a,'default','wiki'),[]),
          (T('Update DB Fields'),URL(_a,'default','update_dynamic_fields')==URL(),URL(_a,'default','update_dynamic_fields'),[]),

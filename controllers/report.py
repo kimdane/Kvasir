@@ -11,8 +11,9 @@
 ##--------------------------------------#
 
 ## import those nice ready-made functions that make up a good report
-execfile(os.path.join(request.folder,'controllers/hosts.py'))
+import os
 execfile(os.path.join(request.folder,'controllers/vulns.py'))
+execfile(os.path.join(request.folder,'controllers/hosts.py'))
 
 from skaldship.general import cvss_metrics
 from skaldship.hosts import create_hostfilter_query
@@ -187,12 +188,13 @@ def report():
                     vuln['proof'] = vuln_rec.f_proof
 
                     vulndata = db.t_vulndata[vuln_rec.f_vulndata_id]
+                    vuln['vulninfo'] = vulndata
                     vuln['id'] = vulndata.f_vulnid
                     vuln['title'] = vulndata.f_title
                     vuln['severity'] = str(vulndata.f_severity)
                     vuln['pci_sev'] = str(vulndata.f_pci_sev)
                     vuln['cvss_score'] = str(vulndata.f_cvss_score)
-                    vuln['cvss_metric'] = cvss_metrics(vulndata)
+                    vuln['cvssmetrics'] = cvss_metrics(vulndata)
                     vuln['description'] = vulndata.f_description
                     vuln['solution'] = vulndata.f_solution
 
@@ -206,6 +208,17 @@ def report():
                             ref['source'] = record.f_source
                             ref['text'] = record.f_text.decode('utf-8')
                             vuln['refs'].append(ref)
+
+                    # find vulnerability exploits and add them
+                    vuln_exploits = '' #db(db.t_vuln_references.f_vulndata_id == vulndata.id).select()
+                    if len(vuln_exploits) > 0:
+                      vuln['exploits'] = []
+                      for ref_rec in vuln_refs:
+                        ref = {}
+                        record = db.t_vuln_refs[ref_rec.f_vuln_ref_id]
+                        ref['source'] = record.f_source
+                        ref['text'] = record.f_text.decode('utf-8')
+                        vuln['refs'].append(ref)
 
                     service['vulns'].append(vuln)
 
@@ -224,6 +237,7 @@ def report():
                     if id not in vulnerabilities:
                         vulnerabilities[id] = vuln
                     vulnerabilities[id]['hosts'].append(vulnhost)
+                    print vuln
             host['services'].append(service)
 
             # accounts
@@ -271,12 +285,25 @@ def report():
                         account['description'] = acct_rec.f_description.decode('utf-8')
                     host['accounts'].append(account)
         hosts.append(host)
-    add_hosts = AddModal(db.t_hosts, 'Add Host', 'Add Host', 'Add Host',cmd = 'hosttable.fnReloadAjax();' )
     response.files.append(URL(request.application,'static','js/jquery.sparkline.js'))
-    return dict(statistics=statistics, vulnerabilities=vulnerabilities, adv_stats=adv_stats, graphs=graphs, hosts=hosts, add_hosts=add_hosts, hostfilter=session.hostfilter, listjson=str(list()).replace('\"','\\\"').replace('\'','\"').replace('L, ',', ').replace('None','null'))
+
+    #get JSON from host.list and use mockjax
+    ext = request.extension
+    request.extension = 'json'
+    hostlist = list()
+    #remove the engineer from the customers report
+    hostlist['aaData'][-1]['10']=None
+    listjson=str(hostlist).replace('\"','\\\"').replace('\'','\"').replace('L, ',', ').replace('None','null')
+    request.extension = ext
+    #vulnlst = []
+    #for v in vulnerabilities:
+    #  request.args.append(vulnerabilities[v]['id'])
+    #  vulnlst.append(vulninfo_by_vulnid())
+    #  del request.args[0]
+    return dict(vulnlst=vulnerabilities, statistics=statistics, vulnerabilities=vulnerabilities, adv_stats=adv_stats, graphs=graphs, hosts=hosts, hostfilter=session.hostfilter, listjson=listjson)
 
 @auth.requires_login()
-def list():
+def listi():
     tot_vuln = 0
     tot_hosts = 0
 
@@ -291,7 +318,7 @@ def list():
     # if a hostfilter is applied
     q = (db.t_hosts.id > 0)
     q = create_hostfilter_query(session.hostfilter, q)
-
+    print "hi!"
     aaData = []
     rows = db(q).select(db.t_hosts.ALL, db.t_host_os_refs.f_certainty, db.t_os.f_title, db.auth_user.username,
                         left=(db.t_host_os_refs.on(db.t_hosts.id==db.t_host_os_refs.f_hosts_id),
@@ -342,7 +369,6 @@ def list():
 
             aaData.append(atxt)
             tot_hosts += 1
-
     result = { 'sEcho': request.vars.sEcho,
                'iTotalRecords': len(aaData),
                'iTotalDisplayRecords': len(aaData),
