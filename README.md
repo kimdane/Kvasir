@@ -23,9 +23,10 @@ task. This design keeps data separated and from you accidentally attacking
 or reviewing other customers.
 
 This tool was developed primarily for the Cisco Systems Advanced Services
-Security Posture Assessment (SPA) team. While not every method used by the
-SPA team may directly relate we hope that this tool is something that can
-be molded and adapted to fit almost any working scenario.
+Security Posture Assessment (SPA) team, and then customized for use by the
+penetration testing team at Conduct.  While not every method used by the SPA
+team or Conduct may directly relate we hope that this tool is something that
+can be molded and adapted to fit almost any working scenario.
 
 
 DOCUMENTATION
