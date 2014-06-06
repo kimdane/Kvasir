@@ -1,4 +1,319 @@
-{{extend 'layout.html'}}
+{{extend 'layout-flat-nomenu.html'}}
+
+<style type="text/css">
+.pagebreak { page-break-before: always; }
+.pagebreak-after { page-break-after: always; }
+
+html {
+  margin: 0;
+  font: 10pt/1.26 "Gill Sans", sans-serif;
+}
+
+body {
+
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 2em 0 0.5em 0;
+  page-break-after: avoid;
+}
+
+/* define default page and names pages: cover, blank, frontmatter */
+
+@page :left {
+  @top-left {
+    font: 11pt "Gill Sans", serif;
+    content: "Cascading Style Sheets";
+    vertical-align: bottom;
+    padding-bottom: 2em;
+  }
+
+  @bottom-left {
+    font: 11pt "Gill Sans", serif;
+    content: counter(page);
+    padding-top: 2em;
+    vertical-align: top;
+  }
+}
+
+@page :right {
+  @top-right {
+    font: 11pt "Gill Sans", serif;
+    content: string(header, first);
+    vertical-align: bottom;
+    padding-bottom: 2em;
+  }
+
+  @bottom-right {
+    font: 11pt "Gill Sans", serif;
+    content: counter(page);
+    text-align: right;
+    vertical-align: top;
+    padding-top: 2em;
+  }
+}
+
+@page frontmatter :left {
+  @top-left {
+    font: 11pt "Gill Sans", serif;
+    content: string(title);
+    vertical-align: bottom;
+    padding-bottom: 2em;
+  }
+
+  @bottom-left {
+    font: 11pt "Gill Sans", serif;
+    content: counter(page, lower-roman);
+    padding-top: 2em;
+    vertical-align: top;
+  }
+}
+
+@page cover { margin: 0; }
+
+@page frontmatter :right {
+  @top-right {
+    font: 11pt "Gill Sans", serif;
+    content: string(header, first);
+    vertical-align: bottom;
+    padding-bottom: 2em;
+  }
+
+  @bottom-right {
+    font: 11pt "Gill Sans", serif;
+    content: counter(page, lower-roman);
+    text-align: right;
+    vertical-align: top;
+    padding-top: 2em;
+  }
+}
+
+@page blank :left {
+  @cover { content: normal }
+  @bottom-left { content: normal }
+}
+
+@page blank :right {
+  @top-right { content: normal }
+  @bottom-right { content: normal }
+}
+
+/* which section uses which named page */
+
+div.halftitlepage, div.titlepage, div.imprint, div.dedication { page: blank }
+div.foreword, div.toc, div.preface { page: frontmatter }
+
+
+/* page breaks */
+
+div.frontcover, div.halftitlepage, div.titlepage { page-break-before: right }
+div.imprint { page-break-before: always }
+div.dedication, div.foreword, div.toc, div.preface, div.chapter, div.reference,
+div.appendix, div.bibliography, div.glossary, div.index, div.colophon {
+  page-break-before: always
+}
+div.backcover { page-break-before: left }
+
+/* the front cover */
+
+div.frontcover { page: cover; }
+
+div.frontcover img {
+  position: absolute;
+  width: 7in; height: 9.25in;
+  left: 0; top: 0;
+  z-index: -1;
+}
+
+div.frontcover svg {
+  position: absolute;
+  width: 7in; height: 9.25in;
+  left: 6; top: 4;
+  z-index: -1;
+}
+
+div.frontcover h1 {
+  position: absolute;
+  left: 6cm; top: 6cm;
+  color: white;
+  font-size: 44pt;
+  font-weight: normal;
+}
+
+div.frontcover h2 {
+  position: absolute;
+  right: 0; top: 5cm;
+  color: black;
+  background: white;
+  font-size: 16pt;
+  font-weight: normal;
+  padding: 0.2em 5em 0.2em 1em;
+  letter-spacing: 0.15em;
+}
+
+div.frontcover h3 {
+  position: absolute;
+  left: 2cm; top: 7cm;
+  color: white;
+  font-size: 24pt;
+  font-weight: normal;
+}
+
+div.frontcover p {
+  position: absolute;
+  left: 2cm; bottom: 1.5cm;
+  font-size: 24pt;
+  color: black;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+
+/* titlepage, halftitlepage */
+
+div.titlepage h1, div.halftitlepage h1 { margin-bottom: 2em; }
+div.titlepage h2, div.halftitlepage h2 { font-size: 1.2em; margin-bottom: 3em; }
+div.titlepage h3, div.halftitlepage h3 { font-size: 1em; margin-bottom: 3em; }
+div.titlepage p, div.halftitlepage p {
+  font-size: 1.4em;
+  font-weight: bold;
+  margin: 0; padding: 0;
+}
+
+/* TOC */
+
+ul.toc, ul.toc ul {
+  list-style-type: none;
+  margin: 0; padding: 0;
+}
+ul.toc ul {
+  margin-left: 1em;
+  font-weight: normal;
+}
+ul.toc > li {
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+ul.toc a::after {
+  content: leader('.') target-counter(attr(href), page);
+  font-style: normal;
+}
+ul.toc > li.frontmatter a::after {
+  content: leader('.') target-counter(attr(href), page, lower-roman);
+  font-style: normal;
+}
+ul.toc > li.endmatter a::after {
+  content: leader('.') target-counter(attr(href), page);
+  font-style: normal;
+}
+ul.toc > li.chapter::before {
+  content: "Chapter " counter(toc-chapter, decimal);
+  display: block;
+  margin: 1em 0 0.1em -2.5cm;
+  font-weight: normal;
+  counter-increment: toc-chapter;
+  page-break-after: avoid;
+}
+
+/* chapter numbers */
+
+div.chapter { counter-increment: chapter; }
+
+h1::before {
+  white-space: pre;
+  margin-left: -2.5cm;
+  font-size: 50%;
+  content: "\B0  \B0  \B0  \B0  \B0 \A";  /* ornaments */
+}
+
+div.chapter h1::before { content: "Chapter " counter(chapter) " \A"; }
+
+div.frontcover h1::before, div.titlepage h1::before, div.halftitlepage h1::before {
+  content: normal;                  /* that is, none */
+}
+
+h1 { string-set: header content();}
+div.chapter h1 { string-set: header "Chapter " counter(chapter) ": " content(); }
+
+/* index */
+
+ul.index {
+  list-style-type: none;
+  margin: 0; padding: 0;
+  column-count: 2;
+  column-gap: 1em;
+}
+
+ul.index a::after { content: ", " target-counter(attr(href), page); }
+
+
+span.element, span.attribute {
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 80%;
+}
+span.property { font-weight: bold }
+code, span.css, span.value, span.declaration {
+  font: 90% "Lucida Console", "Lucida Sans Typewriter", monospace;
+}
+
+
+@media screen, handheld {
+  html { margin: 1em; font: 14px "Gill Sans", sans-serif; }
+  h1 { margin-bottom: 0.5em }
+  div.frontcover, div.halftitlepage, div.titlepage, div.imprint,
+  div.dedication, div.foreword, div.toc, div.index { display: none }
+}
+
+</style>
+
+<div class="frontcover">
+<h1>Rapport Sikkerhetstest
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="324.119px" height="40.391px" viewBox="0 0 324.119 40.391" enable-background="new 0 0 324.119 40.391" xml:space="preserve" class="svg replaced-svg">
+<g>
+	<path fill="#605B5E" d="M32.841,10.629c-2.087-1.262-5.249-2.402-9.611-2.402c-7.335,0-13.216,4.744-13.216,12.012   c0,7.207,5.881,11.951,13.531,11.951c4.363,0,7.715-0.9,9.928-2.282l-0.822,8.349c-2.275,1.261-5.69,2.041-10.56,2.041   c-10.623,0-22.005-6.906-22.005-20.059c0-13.213,11.445-20.061,22.005-20.061c5.059,0,9.042,1.021,11.445,2.343L32.841,10.629z"></path>
+	<path fill="#605B5E" d="M64.578,40.297c-11.129,0-21.688-7.747-21.688-20.119c0-12.252,10.56-20,21.688-20   c11.192,0,21.752,7.748,21.752,20C86.33,32.55,75.771,40.297,64.578,40.297z M64.578,8.346c-6.07,0-11.761,4.686-11.761,11.832   c0,7.207,5.69,11.892,11.761,11.892s11.825-4.685,11.825-11.892C76.403,13.031,70.648,8.346,64.578,8.346z"></path>
+	<path fill="#605B5E" d="M131.283,39.816L115.602,23.48c-2.529-2.643-5.375-5.885-7.524-8.408l-0.127,0.061   c0.127,2.703,0.19,5.646,0.19,8.048v16.216h-9.802V1.079h7.904l13.658,14.294c1.897,1.982,4.742,5.105,6.576,7.327l0.126-0.06   c-0.126-2.283-0.189-4.745-0.189-7.147V1.079h9.801v38.737H131.283z"></path>
+	<path fill="#605B5E" d="M163.084,39.396h-13.596V1.079h13.596c11.635,0,21.625,7.207,21.625,19.159   C184.709,32.189,174.719,39.396,163.084,39.396z M161.945,9.066h-3.035v22.342h3.035c7.019,0,12.963-3.723,12.963-11.17   S168.964,9.066,161.945,9.066z"></path>
+	<path fill="#605B5E" d="M214.169,40.237c-9.611,0-17.452-5.405-17.452-13.934V1.079h9.801v24.384c0,3.904,3.099,6.606,7.778,6.606   c4.679,0,7.841-2.702,7.841-6.606V1.079h9.548v25.225C231.685,34.832,223.844,40.237,214.169,40.237z"></path>
+	<path fill="#605B5E" d="M276.448,10.629c-2.087-1.262-5.249-2.402-9.611-2.402c-7.335,0-13.216,4.744-13.216,12.012   c0,7.207,5.881,11.951,13.531,11.951c4.363,0,7.715-0.9,9.928-2.282l-0.822,8.349c-2.275,1.261-5.69,2.041-10.56,2.041   c-10.623,0-22.005-6.906-22.005-20.059c0-13.213,11.445-20.061,22.005-20.061c5.059,0,9.042,1.021,11.445,2.343L276.448,10.629z"></path>
+	<path fill="#605B5E" d="M311.979,8.526v30.87h-9.738V8.467h-12.203V1.079h34.082v7.447H311.979z"></path>
+</g>
+<path fill="#F26D63" d="M281.771,19.854l-14.513-5.586c-0.256-0.098-0.571-0.098-0.827,0c-0.257,0.1-0.414,0.281-0.414,0.48v11.172  c0,0.195,0.157,0.379,0.414,0.475c0.127,0.053,0.27,0.076,0.413,0.076c0.145,0,0.286-0.023,0.414-0.076l14.513-5.584  c0.258-0.1,0.413-0.281,0.413-0.479S282.029,19.954,281.771,19.854z"></path>
+</svg>
+</h1>
+</div>
+
+<div class="toc pagebreak-after" id="toc-h-1">
+<h1>{{=T('Table of Contents')}}</h1>
+<ul class="toc">
+<li class="frontmatter"><a href="#toc-h-1">{{=T('Table of Contents')}}</a></li>
+<li class="frontmatter"><a href="#preface-h-1">{{=T('Summaries')}}</a></li>
+<li class="chapter"><a href="#html-h-1">{{=T('Managements Summary')}}</a>
+  <ul>
+  <li class="section"><a href="#the-web"></a>
+    <ul>
+    <li class="section"><a href="#development">Kan brukes</a></li>
+    <li class="section"><a href="#images">Ekstra avsnitt</a></li>
+    </ul>
+  </li>
+  </ul>
+</li>
+<li class="chapter"><a href="#css-h-1">{{=T('Managements Mitigations')}}</a>
+  <ul>
+  <li class="section"><a href="#rules">Noe</a></li>
+  </ul>
+</li>
+<li class="chapter"><a href="#html-h-1">{{=T('Technical Summary')}}</a></li>
+<li class="chapter"><a href="#html-h-1">{{=T('Technical Mitigations')}}</a></li>
+<li class="chapter"><a href="#html-h-1">{{=T('Technical Findings')}}</a></li>
+<li class="endmatter"><a href="#index-h-1">{{=T('Appendix')}}</a></li>
+</ul>
+</div>
+
+{{=auth.wiki('ledelsens-oppsummering')}}
+
+{{=auth.wiki('ledelsens-tiltak')}}
 
 <div class="row-fluid">
   <div class="span8">
@@ -13,7 +328,7 @@
           </div>
         </div>
       </div>
-      <div class="span6">
+      <div class="span6 pagebreak">
         <div class="widget-box">
           <div class="widget-title">
             <h5>{{=T('Vulnerabilities')}} by {{if settings.use_cvss:}}{{=T('CVSS Score')}}{{else:}}{{=T('Severity')}}{{pass}}</h5>
@@ -24,7 +339,7 @@
         </div>
       </div>
     </div>
-    <div class="box-container">
+    <div class="box-container pagebreak-after">
       <div class="span6">
         <div class="widget-box">
           <div class="widget-title">
@@ -47,7 +362,7 @@
       </div>
     </div>
 
-<script>
+<script type="text/javascript">
 
 $(function () {
   $('#chart_host_sev').highcharts({
@@ -314,7 +629,7 @@ $(function () {
         </div>
     </div>
 
-  <div class="widget-box">
+  <div class="widget-box pagebreak-after">
         <div class="widget-content">
             <table class="table table-bordered table-hover">
                <thead>
@@ -339,6 +654,8 @@ $(function () {
       </div>
     </div>
   </div>
+
+{{=auth.wiki('teknisk-oppsummering')}}
 
   <div class="widget-box">
         <div class="widget-title">
@@ -387,7 +704,7 @@ $(function () {
             </thead>
         </table>
     </div>
-    <script src="/kvasir/static/js/jquery.mockjax.js"></script>
+    <script type="text/javascript">{{include '../static/js/jquery.mockjax.js'}}</script>
 
     <script type="text/javascript" language="javascript">
     $.mockjax({
@@ -432,9 +749,13 @@ $(function () {
         } );
     } );
     </script>
-
-<h2>Maskiner med sårbarheter</h2>
 </div>
+
+{{=auth.wiki('tekniske-tiltak')}}
+
+
+<h2 class="pagebreak">Tekniske Funn</h2>
+<h3>Maskiner med sårbarheter</h3>
 {{for host in hosts:}}
 {{dohost=1}}
 {{for service in host['services']:}}
@@ -473,7 +794,7 @@ $(function () {
 {{pass}}
 {{pass}}
 
-<h2>Identifiserte sårbarheter</h2>
+<h3 class="pagebreak">Identifiserte sårbarheter</h3>
 <!--
 {{for vulnid in vulnerabilities:}}
 {{vuln = vulnerabilities[vulnid]}}
@@ -533,14 +854,14 @@ $(function () {
 
   {{cvssmetrics = vuln['cvssmetrics']}}
 
-    <div class="row-fluid">
+    <div class="row-fluid pagebreak-after">
         <div id="vulninfo_title">{{=vulninfo.f_title}}</div>
         <div class="row-fluid">
             <div class="span9">
                 <div class="widget-box">
                     <div class="widget-title">
                         <h5>
-                            {{=vulninfo.f_title}} {{=T('Information')}}
+                            {{=T('Vulnerability Information')}}
                         </h5>
                     </div>
                     <div class="widget-content">
@@ -550,6 +871,31 @@ $(function () {
                         </table>
                     </div>
                 </div>
+
+                    <div id="table">
+                    <table cellpadding="0" cellspacing="0" border="0" class="datatable" id="hosttable{{=key}}" width="100%">
+                      <thead>
+                        <tr>
+                      <th>Hostname</th>
+                      <th>Protokoll</th>
+                      <th>IP</th>
+                      <th>URL</th>
+                      <th>Detaljer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                          {{for host in vuln['hosts']:}}
+                          <tr>
+                              <td>{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</td>
+                              <td>{{=host['svcname']}} ({{=host['svcproto']}}/{{=host['svcnumber']}})</td>
+                              <td>{{=host['ipv4']}}</td>
+                              <td>{{=host['url']}}</td>
+                              <td>{{=host['proof']}}</td>
+                          </tr>
+                         {{pass}}
+                      </tbody>
+                    </table>
+                    </div>
             </div>
             <div class="span3">
                 <div class="widget-box">
@@ -567,107 +913,65 @@ $(function () {
                             <strong>{{=T('CVSS Score')}}:</strong>
                             {{=vulninfo.f_cvss_score}}
                             <strong>{{=T('CVSS Metrics')}}:</strong>
-                            {{=cvssmetrics}}
+                            {{fullattrs = {
+                              'AV':T('Access Vector'),
+                              'AVL':T('Local Access'),
+                              'AVA':T('Adjacent Network'),
+                              'AVN':T('Network'),
+
+                              'AC':T('Access Complexity'),
+                              'ACL':T('Low'),
+                              'ACM':T('Medium'),
+                              'ACH':T('High'),
+
+                              'Au':T('Autentication'),
+                              'AuN':T('None required'),
+                              'AuS':T('Single instance'),
+                              'AuM':T('Multiple instances'),
+
+                              'C':T('Confidentiality Impact'),
+                              'CN':T('None'),
+                              'CP':T('Partial'),
+                              'CC':T('Complete'),
+
+                              'I':T('Integrity Impact'),
+                              'IN':T('None'),
+                              'IP':T('Partial'),
+                              'IC':T('Complete'),
+
+                              'A':T('Availability Impact'),
+                              'AN':T('None'),
+                              'AP':T('Partial'),
+                              'AC':T('Complete')
+                              }
+                            }}
+                            {{ for cvss in cvssmetrics.split('/'): }}
+                            {{ attr,value = cvss.split(':')}}
+                              {{if '\N' not in value and 'None' not in value:}}
+                                <strong>{{=fullattrs[attr]}}:</strong>
+                                {{=fullattrs[attr+value]}}<br>
+                              {{pass}}
+                            {{pass}}
+
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+  </div>
+  <hr>
 
-<div id="table{{vuln['id']}}">
-    <table cellpadding="0" cellspacing="0" border="0" class="datatable" id="hosttable{{=vuln['id']}}" width="100%">
-        <thead>
-            <tr>
-                <th width="5%">Merknad</th>
-                <th>IPv4</th>
-                <th>IPv6</th>
-                <th width="5%">Tjenester</th>
-                <th width="5%">Sårbarheter</th>
-                <th width="8%">Sårbarhets Graf</th>
-                <th width="5%">Exploits</th>
-                <th>Hostname</th>
-                <th>NetBIOS</th>
-                <th>OS</th>
-                <th>Gruppe</th>
-            </tr>
-        </thead>
-    </table>
-</div>
-
-
-<hr>
-
-<div class="tabheader" style="clear: both;">
-    <div id="tabs">
-        <div id="TabContent" class="tab-content">
-            {{if 'hosts' in vuln:}}
-              {{hosts = vuln['hosts']}}
-              <div class="tab-pane active" id="hosts_list">
-
-              </div>
-            {{pass}}
-
-            {{if 'exploits' in vuln:}}
-              {{exploits = vuln['exploits']}}
-              <div class="tab-pane" id="exploits_list">
-              {{=exploits}}
-              </div>
-            {{pass}}
-
-            {{if 'refs' in vuln:}}
-              {{refs = vuln['refs']}}
-              <div class="tab-pane" id="references_list">
-              {{=refs}}
-              </div>
-            {{pass}}
-
-        </div>
-    </div>
-</div>
-
-<script>
-var vulntable;
-var exploits_table;
-var del_selected;
-var exploit_selected;
-
+<script type="text/javascript" language="javascript">
 jQuery(document).ready(function() {
-    jQuery(".title").click(function() {
-      jQuery(this).next(".table").slideToggle(600);
+    hosttable = $('#hosttable{{=key}}').dataTable();
+
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline",
     } );
-
-    vulntable = jQuery("#vulntable").dataTable({
-        "sDom": 'T<"clear">lfrtip',
-        "oTableTools": {
-            "sRowSelect": "multi",
-            "sSelectedClass": "row_selected",
-            "sSwfPath": "{{=URL('static', 'TableTools/swf/copy_csv_xls.swf')}}",
-            "aButtons": [
-                "select_all",
-                "select_none",
-                "copy",
-                "csv",
-                "print"
-            ]
-        },
-        "aoColumnDefs": [
-            { "bSortable": false, "aTargets": [ 0 ] },
-            { "sType": "formatted-num", "aTargets": [1] },
-        ],
-        "aaSorting": [[ 1, "asc" ]],
-        "fnDrawCallback": function() {
-            hosts_delete_setup();
-        },
-    });
-
-    exploits_table = jQuery("#exploits_table").dataTable({
-        "oTableTools": {
-            "sSwfPath": "{{=URL('static','TableTools/swf/copy_csv_xls.swf')}}",
-        },
-        "sDom": 'T<"clear">lfrtip',
-    });
+} );
 </script>
+
+
 {{pass}}
 
-{{=auth.wiki('ledelsens-oppsummering')}}
+<div class="appendix"><h1>{{=T('Appendix')}}</h1></div>

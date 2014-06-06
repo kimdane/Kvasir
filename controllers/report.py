@@ -195,6 +195,7 @@ def report():
                     vuln['pci_sev'] = str(vulndata.f_pci_sev)
                     vuln['cvss_score'] = str(vulndata.f_cvss_score)
                     vuln['cvssmetrics'] = cvss_metrics(vulndata)
+                    print vuln['cvssmetrics']
                     vuln['description'] = vulndata.f_description
                     vuln['solution'] = vulndata.f_solution
 
@@ -237,7 +238,7 @@ def report():
                     if id not in vulnerabilities:
                         vulnerabilities[id] = vuln
                     vulnerabilities[id]['hosts'].append(vulnhost)
-                    print vuln
+
             host['services'].append(service)
 
             # accounts
@@ -291,91 +292,12 @@ def report():
     ext = request.extension
     request.extension = 'json'
     hostlist = list()
-    #remove the engineer from the customers report
+    request.extension = ext
+    #remove the engineer field from the customers report
     hostlist['aaData'][-1]['10']=None
     listjson=str(hostlist).replace('\"','\\\"').replace('\'','\"').replace('L, ',', ').replace('None','null')
-    request.extension = ext
-    #vulnlst = []
-    #for v in vulnerabilities:
-    #  request.args.append(vulnerabilities[v]['id'])
-    #  vulnlst.append(vulninfo_by_vulnid())
-    #  del request.args[0]
+
     return dict(vulnlst=vulnerabilities, statistics=statistics, vulnerabilities=vulnerabilities, adv_stats=adv_stats, graphs=graphs, hosts=hosts, hostfilter=session.hostfilter, listjson=listjson)
-
-@auth.requires_login()
-def listi():
-    tot_vuln = 0
-    tot_hosts = 0
-
-    """
-    # load all the vulndata from service_vulns into a dictionary
-    # so we only have to query the memory variables instead of
-    # the database each time. We need to collect:
-    # svc_vulndata[f_service_id] = (f_vulnid, f_severity, f_cvss_score)
-    """
-
-    # build the query variable.. first all hosts then check
-    # if a hostfilter is applied
-    q = (db.t_hosts.id > 0)
-    q = create_hostfilter_query(session.hostfilter, q)
-    print "hi!"
-    aaData = []
-    rows = db(q).select(db.t_hosts.ALL, db.t_host_os_refs.f_certainty, db.t_os.f_title, db.auth_user.username,
-                        left=(db.t_host_os_refs.on(db.t_hosts.id==db.t_host_os_refs.f_hosts_id),
-                              db.t_os.on(db.t_os.id==db.t_host_os_refs.f_os_id),
-                              db.auth_user.on(db.t_hosts.f_engineer==db.auth_user.id)),
-                        orderby=db.t_hosts.id|~db.t_host_os_refs.f_certainty)
-    # datatable formatting is specific, crud results are not
-    seen = set()
-    for r in rows:
-        if r.t_hosts.id not in seen and not seen.add(r.t_hosts.id): # kludge way to select only rows per host with the best OS-guess
-            spanflags = []
-            if r.t_hosts.f_confirmed:
-                confirmed = 'hosts_select_confirmed'
-                spanflags.append('<span class="badge"><i class="icon-check"></i></span>')
-            else:
-                confirmed = 'hosts_select_unconfirmed'
-
-            if r.t_hosts.f_accessed:
-                spanflags.append('<span class="badge badge-success"><i class="icon-heart"></i></span>')
-            if r.t_hosts.f_followup:
-                spanflags.append('<span class="badge badge-important"><i class="icon-flag"></i></span>')
-
-            confirmed = '<div class="%s">%s</div>' % (confirmed, " ".join(spanflags))
-
-            if r.t_hosts.f_ipv4:
-                ipv4 = A(r.t_hosts.f_ipv4, _id='ipv4', _href=URL('detail', extension='html', args=[r.t_hosts.id]), _target="host_detail_%s" % (r.t_hosts.id)).xml()
-            else:
-                ipv4 = ""
-
-            if r.t_os.f_title is None:
-                os = "Ukjent"
-            else:
-                os = r.t_os.f_title
-
-            atxt = {
-                 '0': confirmed,
-                 '1': ipv4,
-                 '2': r.t_hosts.f_service_count,
-                 '3': r.t_hosts.f_vuln_count,
-                 '4': "<span class=\"severity_sparkline\" values=\"%s\"></span>" % (r.t_hosts.f_vuln_graph),
-                 '5': r.t_hosts.f_exploit_count,
-                 '6': r.t_hosts.f_hostname,
-                 '7': r.t_hosts.f_netbios_name,
-                 '8': os,
-                 '9': r.t_hosts.f_asset_group,
-                 'DT_RowId': "%s" % (r.t_hosts.id),
-            }
-
-            aaData.append(atxt)
-            tot_hosts += 1
-    result = { 'sEcho': request.vars.sEcho,
-               'iTotalRecords': len(aaData),
-               'iTotalDisplayRecords': len(aaData),
-               'aaData': aaData,
-               }
-
-    return result
 
 @auth.requires_login()
 def spreadsheet():
