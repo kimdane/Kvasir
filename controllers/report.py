@@ -195,7 +195,6 @@ def report():
                     vuln['pci_sev'] = str(vulndata.f_pci_sev)
                     vuln['cvss_score'] = str(vulndata.f_cvss_score)
                     vuln['cvssmetrics'] = cvss_metrics(vulndata)
-                    print vuln['cvssmetrics']
                     vuln['description'] = vulndata.f_description
                     vuln['solution'] = vulndata.f_solution
 
