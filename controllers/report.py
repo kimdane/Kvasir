@@ -33,9 +33,6 @@ def report():
     Genereate a HTML-report with fields from statistics, hosts, vulns, and summaries from the wiki
     """
 
-    response.files.append(URL(request.application, 'static', 'js/jquery.tagcloud-2.js'))
-    response.files.append(URL(request.application, 'static', 'js/highcharts.js'))
-
     statistics = db_statistics()
     adv_stats = adv_db_statistics()
     graphs = graphs_index()
@@ -84,6 +81,7 @@ def report():
         if highest[0] > 0:
             # add os element to the host
             record = highest[1]
+            host['os']=record
             host['os']['certainty'] = str(highest[0])
             if record.f_class not in notin:
                 host['os']['class'] = record.f_class
@@ -101,28 +99,28 @@ def report():
             host['os']['id'] = cpeid
 
             # if the id isn't in os_records, add it
-            if len(os_xml.findall('.//os[@id="%s"]' % (os.get('id', None)))) < 1:
-                os_rec = db.t_os[highest[1].f_os_id]
-                host['os']['id'] = cpeid
-                host['os']['title'] = os_rec.f_title
-
-                if os_rec.f_vendor not in notin:
-                    host['os']['vendor'] = os_rec.f_vendor
-
-                if os_rec.f_product not in notin:
-                    host['os']['product'] = os_rec.f_product
-
-                if os_rec.f_version not in notin:
-                    host['os']['version'] = os_rec.f_version
-
-                if os_rec.f_update not in notin:
-                    host['os']['update'] = os_rec.f_update
-
-                if os_rec.f_edition not in notin:
-                    host['os']['edition'] = os_rec.f_edition
-
-                if os_rec.f_language not in notin:
-                    host['os']['language'] = os_rec.f_language
+            # if 1:
+            #     os_rec = db.t_os[highest[1].f_os_id]
+            #     host['os']['id'] = cpeid
+            #     host['os']['title'] = os_rec.f_title
+            #
+            #     if os_rec.f_vendor not in notin:
+            #         host['os']['vendor'] = os_rec.f_vendor
+            #
+            #     if os_rec.f_product not in notin:
+            #         host['os']['product'] = os_rec.f_product
+            #
+            #     if os_rec.f_version not in notin:
+            #         host['os']['version'] = os_rec.f_version
+            #
+            #     if os_rec.f_update not in notin:
+            #         host['os']['update'] = os_rec.f_update
+            #
+            #     if os_rec.f_edition not in notin:
+            #         host['os']['edition'] = os_rec.f_edition
+            #
+            #     if os_rec.f_language not in notin:
+            #         host['os']['language'] = os_rec.f_language
 
         # snmp strings
         snmp_recs = db(db.t_snmp.f_hosts_id == host_rec.id).select()
@@ -158,10 +156,12 @@ def report():
         for svc_rec in db(db.t_services.f_hosts_id == host_rec.id).select():
             service = {}
             service['proto'] = svc_rec.f_proto
-            service['number'] = svc_rec.f_number
+            service['number'] = int(svc_rec.f_number)
 
             if svc_rec.f_name not in notin:
                 service['name'] = svc_rec.f_name.decode('utf-8')
+            else:
+                service['name'] = T('unknown')
 
             if svc_rec.f_banner not in notin:
                 service['banner'] = svc_rec.f_banner.decode('utf-8')
@@ -220,83 +220,103 @@ def report():
                         ref['text'] = record.f_text.decode('utf-8')
                         vuln['refs'].append(ref)
 
-                    service['vulns'].append(vuln)
+                    if (int(vuln['severity'])>0):
+                      service['vulns'].append(vuln)
 
-                    vuln['hosts'] = []
-                    vulnhost = host
-                    vulnhost['svcproto'] = service['proto']
-                    vulnhost['svcnumber'] = service['number']
-                    vulnhost['status'] = vuln_rec.f_status
-                    vulnhost['proof'] = vuln_rec.f_proof
-                    vulnhost['url'] = 'todo'
-                    if svc_rec.f_name not in notin:
-                        vulnhost['svcname'] = svc_rec.f_name.decode('utf-8')
-                    if svc_rec.f_banner not in notin:
-                        vulnhost['svcbanner'] = svc_rec.f_banner.decode('utf-8')
-                    id = str(vuln_rec.f_vulndata_id)
-                    if id not in vulnerabilities:
-                        vulnerabilities[id] = vuln
-                    vulnerabilities[id]['hosts'].append(vulnhost)
+                      vuln['hosts'] = []
+                      vulnhost = {}
+                      vulnhost['ipv4'] = host['ipv4']
+                      if 'hostname' in host:
+                        vulnhost['hostname'] = host['hostname']
+                      else:
+                        vulnhost['hostname'] = host['ipv4']
+                      vulnhost['svcproto'] = service['proto']
+                      vulnhost['svcnumber'] = service['number']
+                      vulnhost['status'] = vuln_rec.f_status
+                      vulnhost['proof'] = vuln_rec.f_proof
+                      vulnhost['url'] = ''
+                      if svc_rec.f_name not in notin:
+                          vulnhost['svcname'] = svc_rec.f_name.decode('utf-8')
+                      else:
+                          vulnhost['svcname'] = T('unknown')
+                      if svc_rec.f_banner not in notin:
+                          vulnhost['svcbanner'] = svc_rec.f_banner.decode('utf-8')
+                      id = str(vuln_rec.f_vulndata_id)
+                      if id not in vulnerabilities:
+                          vulnerabilities[id] = vuln
+                      vulnerabilities[id]['hosts'].append(vulnhost)
+
+                if len(service['vulns']) is 0:
+                  del service['vulns']
 
             host['services'].append(service)
-
             # accounts
-            accounts = db(db.t_accounts.f_services_id == svc_rec.id).select()
-            if len(accounts) > 0:
-                host['accounts'] = []
-                accounts_xml = etree.SubElement(service_xml, 'accounts')
-                for acct_rec in accounts:
-                    account = {}
-
-                    if acct_rec.f_username not in notin:
-                        account['username'] = acct_rec.f_username.decode('utf-8')
-
-                    if acct_rec.f_fullname not in notin:
-                        account['fullname'] = acct_rec.f_fullname.decode('utf-8')
-
-                    if acct_rec.f_password not in notin:
-                        account['password'] = acct_rec.f_password.decode('utf-8')
-
-                    if acct_rec.f_hash1 not in notin:
-                        account['hash1'] = acct_rec.f_hash1
-
-                    if acct_rec.f_hash1_type not in notin:
-                        account['hash1_type'] = acct_rec.f_hash1_type
-
-                    if acct_rec.f_hash2 not in notin:
-                        account['hash2'] = acct_rec.f_hash2
-
-                    if acct_rec.f_hash2_type not in notin:
-                        account['hash2_type'] = acct_rec.f_hash2_type
-
-                    if acct_rec.f_uid not in notin:
-                        account['uid'] = acct_rec.f_uid
-
-                    if acct_rec.f_gid not in notin:
-                        account['gid'] = acct_rec.f_gid
-
-                    if acct_rec.f_level not in notin:
-                        account['level'] = acct_rec.f_level
-
-                    if acct_rec.f_domain not in notin:
-                        account['domain'] = acct_rec.f_domain.decode('utf-8')
-
-                    if acct_rec.f_description not in notin:
-                        account['description'] = acct_rec.f_description.decode('utf-8')
-                    host['accounts'].append(account)
+            #accounts = db(db.t_accounts.f_services_id == svc_rec.id).select()
+            # if len(accounts) > 0:
+            #     host['accounts'] = []
+            #
+            #     for acct_rec in accounts:
+            #         account = {}
+            #
+            #         if acct_rec.f_username not in notin:
+            #             account['username'] = acct_rec.f_username.decode('utf-8')
+            #
+            #         if acct_rec.f_fullname not in notin:
+            #             account['fullname'] = acct_rec.f_fullname.decode('utf-8')
+            #
+            #         if acct_rec.f_password not in notin:
+            #             account['password'] = acct_rec.f_password.decode('utf-8')
+            #
+            #         if acct_rec.f_hash1 not in notin:
+            #             account['hash1'] = acct_rec.f_hash1
+            #
+            #         if acct_rec.f_hash1_type not in notin:
+            #             account['hash1_type'] = acct_rec.f_hash1_type
+            #
+            #         if acct_rec.f_hash2 not in notin:
+            #             account['hash2'] = acct_rec.f_hash2
+            #
+            #         if acct_rec.f_hash2_type not in notin:
+            #             account['hash2_type'] = acct_rec.f_hash2_type
+            #
+            #         if acct_rec.f_uid not in notin:
+            #             account['uid'] = acct_rec.f_uid
+            #
+            #         if acct_rec.f_gid not in notin:
+            #             account['gid'] = acct_rec.f_gid
+            #
+            #         if acct_rec.f_level not in notin:
+            #             account['level'] = acct_rec.f_level
+            #
+            #         if acct_rec.f_domain not in notin:
+            #             account['domain'] = acct_rec.f_domain.decode('utf-8')
+            #
+            #         if acct_rec.f_description not in notin:
+            #             account['description'] = acct_rec.f_description.decode('utf-8')
+            #         host['accounts'].append(account)
         hosts.append(host)
-    response.files.append(URL(request.application,'static','js/jquery.sparkline.js'))
+    #response.files.append(URL(request.application,'static','js/jquery.sparkline.js'))
 
     #get JSON from host.list and use mockjax
     ext = request.extension
     request.extension = 'json'
-    hostlist = list()
+    hostlist = list() #Not an empty list
     request.extension = ext
     #remove the engineer field from the customers report
     hostlist['aaData'][-1]['10']=None
-    listjson=str(hostlist).replace('\"','\\\"').replace('\'','\"').replace('L, ',', ').replace('None','null')
-
-    return dict(vulnlst=vulnerabilities, statistics=statistics, vulnerabilities=vulnerabilities, adv_stats=adv_stats, graphs=graphs, hosts=hosts, hostfilter=session.hostfilter, listjson=listjson)
+    import re
+    hostlist = re.sub("href=\"[^>]*>([^<]*)","href=\"#\\1\">\\1", str(hostlist))
+    listjson=hostlist.replace('\"','\\\"').replace('\'','\"').replace('L, ',', ').replace('None','null')
+    vulnlst=sorted(vulnerabilities, key=lambda x: int(vulnerabilities[x]['severity']), reverse=True)
+    return dict(
+    vulnlst=vulnlst,
+    vulnerabilities=vulnerabilities,
+    statistics=statistics,
+    adv_stats=adv_stats,
+    graphs=graphs,
+    hosts=hosts,
+    hostfilter=session.hostfilter,
+    listjson=listjson)
 
 @auth.requires_login()
 def spreadsheet():

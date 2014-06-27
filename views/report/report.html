@@ -1,3 +1,4 @@
+{{response.title='%s %s' % (T('Report'), settings.customer ) }}
 {{extend 'layout-flat-nomenu.html'}}
 
 <style type="text/css">
@@ -264,11 +265,11 @@ code, span.css, span.value, span.declaration {
   div.frontcover, div.halftitlepage, div.titlepage, div.imprint,
   div.dedication, div.foreword, div.toc, div.index { display: none }
 }
-
+#header {position:absolute;margin-top:-150px}
 </style>
 
-<div class="frontcover">
-<h1>Rapport Sikkerhetstest
+<div id="header">
+<h1>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="324.119px" height="40.391px" viewBox="0 0 324.119 40.391" enable-background="new 0 0 324.119 40.391" xml:space="preserve" class="svg replaced-svg">
 <g>
 	<path fill="#605B5E" d="M32.841,10.629c-2.087-1.262-5.249-2.402-9.611-2.402c-7.335,0-13.216,4.744-13.216,12.012   c0,7.207,5.881,11.951,13.531,11.951c4.363,0,7.715-0.9,9.928-2.282l-0.822,8.349c-2.275,1.261-5.69,2.041-10.56,2.041   c-10.623,0-22.005-6.906-22.005-20.059c0-13.213,11.445-20.061,22.005-20.061c5.059,0,9.042,1.021,11.445,2.343L32.841,10.629z"></path>
@@ -280,8 +281,12 @@ code, span.css, span.value, span.declaration {
 	<path fill="#605B5E" d="M311.979,8.526v30.87h-9.738V8.467h-12.203V1.079h34.082v7.447H311.979z"></path>
 </g>
 <path fill="#F26D63" d="M281.771,19.854l-14.513-5.586c-0.256-0.098-0.571-0.098-0.827,0c-0.257,0.1-0.414,0.281-0.414,0.48v11.172  c0,0.195,0.157,0.379,0.414,0.475c0.127,0.053,0.27,0.076,0.413,0.076c0.145,0,0.286-0.023,0.414-0.076l14.513-5.584  c0.258-0.1,0.413-0.281,0.413-0.479S282.029,19.954,281.771,19.854z"></path>
-</svg>
-</h1>
+</svg> Sikkerhetstest</h1>
+</div>
+<div class="frontcover">
+
+<h2>Rapport for {{=settings.customer}}</h2>
+<h3>Periode: {{=settings.start_date}} - {{=settings.end_date}}</h3>
 </div>
 
 <div class="toc pagebreak-after" id="toc-h-1">
@@ -311,9 +316,16 @@ code, span.css, span.value, span.declaration {
 </ul>
 </div>
 
+<table>
+  <tr>
+    <td>
 {{=auth.wiki('ledelsens-oppsummering')}}
-
-{{=auth.wiki('ledelsens-tiltak')}}
+</td>
+<td>
+  {{=auth.wiki('ledelsens-tiltak')}}
+</td>
+</tr>
+</table>
 
 <div class="row-fluid">
   <div class="span8">
@@ -321,47 +333,28 @@ code, span.css, span.value, span.declaration {
       <div class="span6">
         <div class="widget-box">
           <div class="widget-title">
-            <h5>Top Host {{if settings.use_cvss:}}CVSS Scores{{else:}}Severities{{pass}}</h5>
+            <h5>Top Host {{if settings.use_cvss:}}{{=T('CVSS Score')}}{{else:}}{{=T('Severity')}}{{pass}}</h5>
           </div>
           <div class="widget-content">
             <div id="chart_host_sev"></div>
           </div>
         </div>
       </div>
-      <div class="span6 pagebreak">
+      <div class="span6">
         <div class="widget-box">
           <div class="widget-title">
-            <h5>{{=T('Vulnerabilities')}} by {{if settings.use_cvss:}}{{=T('CVSS Score')}}{{else:}}{{=T('Severity')}}{{pass}}</h5>
+            <h5>{{=T('Vulnerabilities')}} {{=T('by')}} {{if settings.use_cvss:}}{{=T('CVSS Score')}}{{else:}}{{=T('Severity')}}{{pass}}</h5>
           </div>
           <div class="widget-content">
             <div id="chart_vuln_sev"></div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="box-container pagebreak-after">
-      <div class="span6">
-        <div class="widget-box">
-          <div class="widget-title">
-            <h5>OTG graf by {{if settings.use_cvss:}}CVSS Score{{else:}}Severity{{pass}}</h5>
-          </div>
-          <div class="widget-content">
-            <div id="chart_vuln_cat"></div>
-          </div>
-        </div>
-      </div>
-      <div class="span6">
-        <div class="widget-box">
-          <div class="widget-title">
-            <h5>En annen graf by {{if settings.use_cvss:}}CVSS Score{{else:}}Severity{{pass}}</h5>
-          </div>
-          <div class="widget-content">
-            <div id="chart_vuln_new"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+{{=auth.wiki('teknisk-oppsummering')}}
 
+    </div>
+{{graphs['vuln_by_sev_count']=graphs['vuln_by_sev_count'].replace("{ name: 'Sev 0', color: 'grey', y: 540},","{ name: 'Sev 0', color: 'grey', y: 0},") }}
+{{graphs['top_host_sev_count']=graphs['top_host_sev_count'].replace("{ name: 'Sev 0', color: 'grey', y: 7},","{ name: 'Sev 0', color: 'grey', y: 0},") }}
 <script type="text/javascript">
 
 $(function () {
@@ -463,7 +456,7 @@ $(function () {
         },
         series: [{
           name: 'Sårbarheter',
-          data: [ {{=XML(graphs['vuln_by_sev_count'])}} ]
+          data: [ {{=XML(graphs['top_host_sev_count'])}} ]
         }]
   });
 
@@ -496,29 +489,6 @@ $(function () {
 });
 </script>
 
-  <div class="widget-box">
-    <div class="widget-title">
-      <h5>Sårbarheter med høy risiko (7+)</h5>
-    </div>
-    <div class="widget-content">
-      <p align="right"><a target="vulncloud" href="{{=URL('stats', 'vulncloud')}}">Show All</a></p>
-      <div id="vulncloud">
-          Loading...
-      </div>
-    </div>
-  </div>
-
-<script type="text/javascript">
-    jQuery(function() {
-        jQuery.getJSON("{{=URL('stats', 'vulncloud.json', args='7')}}", function(data) {
-            var d = data['vulncloud']
-            jQuery("#vulncloud").tagCloud(d, {'click': function(tag, event) {
-                popup("{{=URL(request.application, 'vulns', 'vulninfo_by_vulnid')}}/" + tag, 'vulninfo_by_vulnid' + tag);
-            }
-        } );
-      } );
-    } );
-</script>
 </div>
 
 <div class="span4">
@@ -608,7 +578,7 @@ $(function () {
         <div class="widget-content">
           <table class="table table-bordered table-hover">
             <tr>
-              <td width="50%">Domains Discovered</td>
+              <td width="50%">{{=T('Domains Discovered')}}</td>
               <td>{{for dom in adv_stats['domains']:}}<a target="_blank" href="{{=URL('netbios', 'domain_detail', vars={'domain':dom})}}">{{=dom}}</a></br>{{pass}}
               </td>
             </tr>
@@ -629,7 +599,7 @@ $(function () {
         </div>
     </div>
 
-  <div class="widget-box pagebreak-after">
+      <div class="widget-box">
         <div class="widget-content">
             <table class="table table-bordered table-hover">
                <thead>
@@ -653,11 +623,36 @@ $(function () {
         </div>
       </div>
     </div>
+
+
+
+
+    <div class="box-container pagebreak">
+      <div class="span6">
+        <div class="widget-box">
+          <div class="widget-title">
+            <h5>OTG graf {{=T('by')}} {{if settings.use_cvss:}}{{=T('CVSS Score')}}{{else:}}{{=T('Severity')}}{{pass}} (Kun eksempel)</h5>
+          </div>
+          <div class="widget-content">
+            <div id="chart_vuln_cat"></div>
+          </div>
+        </div>
+      </div>
+      <div class="span6">
+        <div class="widget-box">
+          <div class="widget-title">
+            <h5>En annen graf {{=T('by')}} {{if settings.use_cvss:}}{{=T('CVSS Score')}}{{else:}}{{=T('Severity')}}{{pass}} (Kun eksempel)</h5>
+          </div>
+          <div class="widget-content">
+            <div id="chart_vuln_new"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+</div>
 
-{{=auth.wiki('teknisk-oppsummering')}}
-
-  <div class="widget-box">
+  <div class="widget-box pagebreak-after">
         <div class="widget-title">
           <h5>Topp15 Tjenester</h5>
         </div>
@@ -677,7 +672,7 @@ $(function () {
                 }}
                  <tr>
                      <td>{{="%s/%s" % (row['t_services.f_proto'], row['t_services.f_number'])}}</td>
-                     <td>{{=row['t_services.f_name']}}</td>
+                     <td>{{if row['t_services.f_name'] is not None: }}{{=row['t_services.f_name']}}{{else:}}{{=T('unknown')}}{{pass}}</td>
                      <td>{{=row[svc_count]}}</td>
                  </tr>
                 {{pass}}
@@ -685,177 +680,89 @@ $(function () {
             </table>
         </div>
     </div>
-    <div id="table">
-        <table cellpadding="0" cellspacing="0" border="0" class="datatable" id="hosttable" width="100%">
-            <thead>
-                <tr>
-                    <th width="5%">Merknad</th>
-                    <th>IPv4</th>
-                    <th>IPv6</th>
-                    <th width="5%">Tjenester</th>
-                    <th width="5%">Sårbarheter</th>
-                    <th width="8%">Sårbarhets Graf</th>
-                    <th width="5%">Exploits</th>
-                    <th>Hostname</th>
-                    <th>NetBIOS</th>
-                    <th>OS</th>
-                    <th>Gruppe</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
-    <script type="text/javascript">{{include '../static/js/jquery.mockjax.js'}}</script>
 
-    <script type="text/javascript" language="javascript">
-    $.mockjax({
-                url: "list.json",
-                responseTime: 0,
-                responseText: {{=XML(listjson)}}
-            });
-
-
-    var hosttable;
-    function doSpark() {
-        jQuery('.severity_sparkline').sparkline('html', { type: 'bar', barColor: 'red',
-            colorMap: [ "grey", "grey", "grey", "blue", "blue", "magenta", "magenta", "red", "red", "red" ] } );
-    }
-
-    jQuery(document).ready(function() {
-        hosttable = $('#hosttable').dataTable( {
-            "sAjaxSource": "list.json",
-            "bDeferRender": true,
-            "sDom": 'TC<"clear">lfrtip',
-            "oTableTools": {
-                "sRowSelect": "multi",
-                "sSelectedClass": "row_selected",
-                "aButtons": []
-            },
-            "fnDrawCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-                //jQuery('#hosttable tbody tr td:nth-child(7)').css("color", "red").css("font-weight", "bold"); //Column 7 is exploits
-                doSpark();
-            },
-            "aoColumnDefs": [
-                { "sType": "ip-address", "aTargets": [ 1, 2 ] },
-                { "sSortDataType": "formatted-num", "aTargets": [ 3, 4 ] },
-                { "sType": "numeric", "aTargets": [ 3, 4 ] },
-                { "sClass": "center", "aTargets": [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ] },
-                { "bSortable": false, "aTargets": [ 0, 5 ] },
-                { "bVisible": false, "aTargets": [ 10, 2 ] },
-            ],
-            "aaSorting": [[ 1, "asc" ]],
-        } );
-        $.extend( $.fn.dataTableExt.oStdClasses, {
-            "sWrapper": "dataTables_wrapper form-inline",
-        } );
-    } );
-    </script>
-</div>
 
 {{=auth.wiki('tekniske-tiltak')}}
 
 
 <h2 class="pagebreak">Tekniske Funn</h2>
-<h3>Maskiner med sårbarheter</h3>
-{{for host in hosts:}}
-{{dohost=1}}
-{{for service in host['services']:}}
-{{if 'vulns' in service and dohost:}}
-  <div class="widget-box">
-        <div class="widget-title">
-          <h5>{{=host['ipv4']}}{{if 'hostname' in host:}} - {{=host['hostname']}}{{pass}}</h5>
-        </div>
-        <div class="widget-content">
-            <table class="table table-bordered table-hover">
-               <thead>
-                 <tr>
-                     <th>Sårbarhet</th>
-                     <th>Tjeneste</th>
-                     <th>Risiko</th>
-                 </tr>
-               </thead>
-               <tbody>
-                {{for service in host['services']:}}
-                {{if 'vulns' in service:}}
-                 {{for vuln in service['vulns']:}}
-                 <tr>
-                     <td>{{=vuln['title']}}</td>
-                     <td>{{=service['name']}} ({{=service['proto']}}/{{=service['number']}})</td>
-                     <td>{{=vuln['severity']}}</td>
-                 </tr>
-                {{pass}}
-                {{pass}}
-                {{pass}}
-              </tbody>
-            </table>
-        </div>
-    </div>
-  {{dohost=0}}
-{{pass}}
-{{pass}}
-{{pass}}
+<div id="table">
+    <table cellpadding="0" cellspacing="0" border="0" class="datatable" id="hosttable" width="100%">
+        <thead>
+            <tr>
+                <th width="5%">Merknad</th>
+                <th>IPv4</th>
+                <th>IPv6</th>
+                <th width="5%">Tjenester</th>
+                <th width="5%">Sårbarheter</th>
+                <th width="8%">Sårbarhets Graf</th>
+                <th width="5%">Exploits</th>
+                <th>Hostname</th>
+                <th>NetBIOS</th>
+                <th>OS</th>
+                <th>Gruppe</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+<script type="text/javascript">{{include '../static/js/jquery.mockjax.js'}}</script>
+
+<script type="text/javascript" language="javascript">
+$.mockjax({
+            url: "list.json",
+            responseTime: 0,
+            responseText: {{=XML(listjson)}}
+        });
+
+
+var hosttable;
+function doSpark() {
+    jQuery('.severity_sparkline').sparkline('html', { type: 'bar', barColor: 'red',
+        colorMap: [ "grey", "grey", "grey", "blue", "blue", "magenta", "magenta", "red", "red", "red" ] } );
+}
+
+jQuery(document).ready(function() {
+    hosttable = $('#hosttable').dataTable( {
+        "sAjaxSource": "list.json",
+        "bDeferRender": true,
+        "sDom": 'TC<"clear">lfrtip',
+        "oTableTools": {
+            "sRowSelect": "multi",
+            "sSelectedClass": "row_selected",
+            "aButtons": []
+        },
+        "fnDrawCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+            //jQuery('#hosttable tbody tr td:nth-child(7)').css("color", "red").css("font-weight", "bold"); //Column 7 is exploits
+            doSpark();
+        },
+        "aoColumnDefs": [
+            { "sType": "ip-address", "aTargets": [ 1, 2 ] },
+            { "sSortDataType": "formatted-num", "aTargets": [ 3, 4 ] },
+            { "sType": "numeric", "aTargets": [ 3, 4 ] },
+            { "sClass": "center", "aTargets": [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ] },
+            { "bSortable": false, "aTargets": [ 0, 5 ] },
+            { "bVisible": false, "aTargets": [ 10, 2 ] },
+        ],
+        "aaSorting": [[ 4, "desc" ]],
+        "paging": true,
+        "searching": true
+    } );
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline",
+    } );
+} );
+</script>
 
 <h3 class="pagebreak">Identifiserte sårbarheter</h3>
-<!--
-{{for vulnid in vulnerabilities:}}
-{{vuln = vulnerabilities[vulnid]}}
-  <div class="widget-box">
-        <div class="widget-title">
-          <h5>{{=vuln['title']}}</h5>
-        </div>
-        <div class="widget-content">
-        <table>
-          <tbody>
-            <tr>
-            <td><b>Beskrivelse: </b></td>
-            <td>{{=vuln['description']}}</td>
-            </tr>
-            <tr>
-            <td><b>Tiltak: </b></td>
-            <td>{{=vuln['solution']}}</td>
-            </tr>
-            {{if 'refs' in vuln:}}
-            <tr>
-            <td><b>Referanser: </b></td>
-            <td>{{for ref in vuln['refs']:}}<b>{{=ref['source']}}:</b></br>{{=ref['text']}}{{pass}}</td>
-            </tr>
-            {{pass}}
-          </tbody>
-        </table>
-            <table class="table table-bordered table-hover">
-               <thead>
-                 <tr>
-                     <th>Hostname</th>
-                     <th>Protokoll</th>
-                     <th>IP</th>
-                     <th>URL</th>
-                     <th>Detaljer</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {{for host in vuln['hosts']:}}
-                 <tr>
-                     <td>{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</td>
-                     <td>{{=host['svcname']}} ({{=host['svcproto']}}/{{=host['svcnumber']}})</td>
-                     <td>{{=host['ipv4']}}</td>
-                     <td>{{=host['url']}}</td>
-                     <td>{{=host['proof']}}</td>
-                 </tr>
-                {{pass}}
-              </tbody>
-            </table>
-        </div>
-    </div>
-{{pass}}
--->
 
 {{for key in vulnlst:}}
-  {{vuln = vulnlst[key]}}
+  {{vuln = vulnerabilities[key]}}
   {{vulninfo = vuln['vulninfo']}}
 
   {{cvssmetrics = vuln['cvssmetrics']}}
 
     <div class="row-fluid pagebreak-after">
-        <div id="vulninfo_title">{{=vulninfo.f_title}}</div>
+        <div id="vulninfo_title"><a id="{{=vulninfo.f_title}}"></a>{{=vulninfo.f_title}}</div>
         <div class="row-fluid">
             <div class="span9">
                 <div class="widget-box">
@@ -872,6 +779,25 @@ $(function () {
                     </div>
                 </div>
 
+{{if "refs" in vuln:}}
+<div class="widget-box">
+  <div class="widget-title">
+                <h5>
+                {{=T('References')}}
+              </h5>
+</div>
+<div class="widget-content">
+<table>
+        {{for ref in vuln['refs']:}}
+      <tr>
+          <td><b>{{=ref['source']}}:</b></td>
+          <td><a target="new" href="{{=ref['text']}}">{{=ref['text']}}</a></td>
+      </tr>
+     {{pass}}
+</table>
+</div>
+</div>
+{{pass}}
                     <div id="table">
                     <table cellpadding="0" cellspacing="0" border="0" class="datatable" id="hosttable{{=key}}" width="100%">
                       <thead>
@@ -886,7 +812,7 @@ $(function () {
                       <tbody>
                           {{for host in vuln['hosts']:}}
                           <tr>
-                              <td>{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</td>
+                              <td><a href="#{{=host['ipv4']}}">{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</a></td>
                               <td>{{=host['svcname']}} ({{=host['svcproto']}}/{{=host['svcnumber']}})</td>
                               <td>{{=host['ipv4']}}</td>
                               <td>{{=host['url']}}</td>
@@ -915,41 +841,41 @@ $(function () {
                             <strong>{{=T('CVSS Metrics')}}:</strong>
                             {{fullattrs = {
                               'AV':T('Access Vector'),
-                              'AVL':T('Local Access'),
-                              'AVA':T('Adjacent Network'),
-                              'AVN':T('Network'),
+                              'AV:L':T('Local Access'),
+                              'AV:A':T('Adjacent Network'),
+                              'AV:N':T('Network'),
 
                               'AC':T('Access Complexity'),
-                              'ACL':T('Low'),
-                              'ACM':T('Medium'),
-                              'ACH':T('High'),
+                              'AC:L':T('Low'),
+                              'AC:M':T('Medium'),
+                              'AC:H':T('High'),
 
                               'Au':T('Autentication'),
-                              'AuN':T('None required'),
-                              'AuS':T('Single instance'),
-                              'AuM':T('Multiple instances'),
+                              'Au:N':T('None required'),
+                              'Au:S':T('Single instance'),
+                              'Au:M':T('Multiple instances'),
 
                               'C':T('Confidentiality Impact'),
-                              'CN':T('None'),
-                              'CP':T('Partial'),
-                              'CC':T('Complete'),
+                              'C:N':T('None'),
+                              'C:P':T('Partial'),
+                              'C:C':T('Complete'),
 
                               'I':T('Integrity Impact'),
-                              'IN':T('None'),
-                              'IP':T('Partial'),
-                              'IC':T('Complete'),
+                              'I:N':T('None'),
+                              'I:P':T('Partial'),
+                              'I:C':T('Complete'),
 
                               'A':T('Availability Impact'),
-                              'AN':T('None'),
-                              'AP':T('Partial'),
-                              'AC':T('Complete')
+                              'A:N':T('None'),
+                              'A:P':T('Partial'),
+                              'A:C':T('Complete')
                               }
                             }}
                             {{ for cvss in cvssmetrics.split('/'): }}
                             {{ attr,value = cvss.split(':')}}
-                              {{if '\N' not in value and 'None' not in value:}}
+                              {{if '\N' not in value and 'None' not in value and len(value)>0:}}
                                 <strong>{{=fullattrs[attr]}}:</strong>
-                                {{=fullattrs[attr+value]}}<br>
+                                {{=fullattrs[attr+':'+value]}}<br>
                               {{pass}}
                             {{pass}}
 
@@ -963,7 +889,8 @@ $(function () {
 
 <script type="text/javascript" language="javascript">
 jQuery(document).ready(function() {
-    hosttable = $('#hosttable{{=key}}').dataTable();
+    hosttable = $('#hosttable{{=key}}').dataTable({"paging": false,
+    "searching": false});
 
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sWrapper": "dataTables_wrapper form-inline",
@@ -973,5 +900,72 @@ jQuery(document).ready(function() {
 
 
 {{pass}}
+
+<h3>Maskiner med identifiserte sårbarheter</h3>
+{{id=0}}
+{{hosts_without_vulns=[]}}
+{{import socket}}
+{{for host in sorted(hosts, key=lambda x: socket.inet_aton(x['ipv4'])):}}
+{{id=id+1}}
+{{dohost=1}}
+{{for service in host['services']:}}
+{{if 'vulns' in service and dohost:}}
+  <div class="widget-box"><a id="{{=host['ipv4']}}"></a>
+        <div class="widget-title">
+          <h5>{{=host['ipv4']}}{{if 'hostname' in host:}} - {{=host['hostname']}}{{pass}}</h5>
+        </div>
+        <div class="widget-content">
+            <table cellpadding="0" cellspacing="0" border="0" class="datatable" id="host-{{=id}}" width="100%">
+              <thead>
+                <tr>
+<th>Sårbarhet</th>
+<th>Tjeneste</th>
+<th>Risiko</th>
+                </tr>
+              </thead>
+<tbody>
+ {{for service in host['services']:}}
+ {{if 'vulns' in service:}}
+  {{for vuln in service['vulns']:}}
+  <tr>
+      <td><a href="#{{=vuln['title']}}">{{=vuln['title']}}</a></td>
+      <td>{{=service['name']}} ({{=service['proto']}}/{{=service['number']}})</td>
+      <td><b>{{=vuln['severity']}}</b></td>
+  </tr>
+ {{pass}}
+ {{pass}}
+ {{pass}}
+</tbody>
+            </table>
+          <br>
+
+            <script type="text/javascript" language="javascript">
+            jQuery(document).ready(function() {
+                $('#host-{{=id}}').dataTable( {
+                  "aaSorting": [[ 2, "desc" ],[ 1, "asc" ], [ 0, "asc" ]],
+                  "paging": false,
+                  "searching": false
+                  } );
+            } );
+            </script>
+
+        </div>
+    </div>
+{{dohost=0}}
+{{pass}}
+{{pass}}
+{{if 'vulns' not in service and dohost:}}{{hosts_without_vulns.append(host)}}{{pass}}
+{{pass}}
+
+<h3 class="pagebreak">Maskiner uten identifiserte sårbarheter</h3>
+
+<div class="widget-box"><a id="{{=host['ipv4']}}"></a>
+  {{for host in sorted(hosts_without_vulns, key=lambda x: socket.inet_aton(x['ipv4'])):}}
+      <div class="widget-title">
+        <h5>{{=host['ipv4']}}{{if 'hostname' in host:}} - {{=host['hostname']}}{{pass}}</h5>
+      </div>
+      {{pass}}
+
+    </div>
 
 <div class="appendix"><h1>{{=T('Appendix')}}</h1></div>

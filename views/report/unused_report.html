@@ -1,0 +1,101 @@
+<!--
+{{for vulnid in vulnerabilities:}}
+{{vuln = vulnerabilities[vulnid]}}
+  <div class="widget-box">
+        <div class="widget-title">
+          <h5>{{=vuln['title']}}</h5>
+        </div>
+        <div class="widget-content">
+        <table>
+          <tbody>
+            <tr>
+            <td><b>Beskrivelse: </b></td>
+            <td>{{=vuln['description']}}</td>
+            </tr>
+            <tr>
+            <td><b>Tiltak: </b></td>
+            <td>{{=vuln['solution']}}</td>
+            </tr>
+            {{if 'refs' in vuln:}}
+            <tr>
+            <td><b>Referanser: </b></td>
+            <td>{{for ref in vuln['refs']:}}<b>{{=ref['source']}}:</b></br>{{=ref['text']}}{{pass}}</td>
+            </tr>
+            {{pass}}
+          </tbody>
+        </table>
+            <table class="table table-bordered table-hover">
+               <thead>
+                 <tr>
+                     <th>Hostname</th>
+                     <th>Protokoll</th>
+                     <th>IP</th>
+                     <th>URL</th>
+                     <th>Detaljer</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {{for host in vuln['hosts']:}}
+                 <tr>
+                     <td>{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</td>
+                     <td>{{=host['svcname']}} ({{=host['svcproto']}}/{{=host['svcnumber']}})</td>
+                     <td>{{=host['ipv4']}}</td>
+                     <td>{{=host['url']}}</td>
+                     <td>{{=host['proof']}}</td>
+                 </tr>
+                {{pass}}
+              </tbody>
+            </table>
+        </div>
+    </div>
+{{pass}}
+-->
+
+<!--
+  <div class="widget-box">
+    <div class="widget-title">
+      <h5>Sårbarheter med høy risiko (7+)</h5>
+    </div>
+    <div class="widget-content">
+      <p align="right"><a target="vulncloud" href="{{=URL('stats', 'vulncloud')}}">Show All</a></p>
+      <div id="vulncloud">
+          {{=T('Loading')}}...
+      </div>
+    </div>
+  </div>
+
+<script type="text/javascript">
+    jQuery(function() {
+        jQuery.getJSON("{{=URL('stats', 'vulncloud.json', args='7')}}", function(data) {
+            var d = data['vulncloud']
+            jQuery("#vulncloud").tagCloud(d, {'click': function(tag, event) {
+                popup("{{=URL(request.application, 'vulns', 'vulninfo_by_vulnid')}}/" + tag, 'vulninfo_by_vulnid' + tag);
+            }
+        } );
+      } );
+    } );
+</script>
+-->
+
+<!--<table class="table table-bordered table-hover">
+   <thead>
+     <tr>
+         <th>Sårbarhet</th>
+         <th>Tjeneste</th>
+         <th>Risiko</th>
+     </tr>
+   </thead>
+   <tbody>
+    {{for service in host['services']:}}
+    {{if 'vulns' in service:}}
+     {{for vuln in service['vulns']:}}
+     <tr>
+         <td>{{=vuln['title']}}</td>
+         <td>{{=service['name']}} ({{=service['proto']}}/{{=service['number']}})</td>
+         <td>{{=vuln['severity']}}</td>
+     </tr>
+    {{pass}}
+    {{pass}}
+    {{pass}}
+  </tbody>
+</table>-->
