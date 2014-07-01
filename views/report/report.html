@@ -805,7 +805,7 @@ jQuery(document).ready(function() {
                       <th>Hostname</th>
                       <th>Protokoll</th>
                       <th>IP</th>
-                      <th>URL</th>
+                      <!--<th>URL</th>-->
                       <th>Detaljer</th>
                         </tr>
                       </thead>
@@ -815,7 +815,7 @@ jQuery(document).ready(function() {
                               <td><a href="#{{=host['ipv4']}}">{{if 'hostname' in host:}}{{=host['hostname']}}{{pass}}</a></td>
                               <td>{{=host['svcname']}} ({{=host['svcproto']}}/{{=host['svcnumber']}})</td>
                               <td>{{=host['ipv4']}}</td>
-                              <td>{{=host['url']}}</td>
+                              <!-- <td>{{=host['url']}}</td>-->
                               <td>{{=MARKMIN(host['proof'])}}</td>
                           </tr>
                          {{pass}}
