@@ -131,7 +131,7 @@ db.define_table('t_service_vulns',
     Field('f_vulndata_id', 'reference t_vulndata', label=T('Vulnerability')),
     Field('f_status', type='string', label=T('Status'),
         requires=IS_IN_SET(vuln_status_set)),
-    Field('f_proof', type='text', length=65535, label=T('Proof'), represent=lambda x, row: MARKMIN(x)),
+    Field('f_proof', type='text', length=16777215, label=T('Proof'), represent=lambda x, row: MARKMIN(x)),
     Field('f_exploited', 'boolean', default=False, label=T('Exploited')),
     format='%(f_service.f_proto)s/%(f_service.f_number)s :: %(f_status)s :: %(f_vulnid)s',
     fake_migrate=settings.fake_migrate, migrate=settings.migrate)
