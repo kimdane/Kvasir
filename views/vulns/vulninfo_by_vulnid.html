@@ -14,7 +14,8 @@
                         </h5>
                     </div>
                     <div class="widget-content">
-                    <a href="javascript:void();" id="button_vulndata_edit" class="btn"><i class="icon-edit"></i> Edit</a>
+                    <!--<a href="javascript:void();" id="button_vulndata_edit" class="btn"><i class="icon-edit"></i> Edit</a>-->
+                    <a href="{{=request.url.replace('vulninfo_by_vulnid.html','vulndata_edit')}}" class="btn"><i class="icon-edit"></i> Edit</a>
                         <table>
                             <tr><td><b>Description: </b></td><td>{{=MARKMIN(vulninfo.f_description)}}</td></tr>
                             <tr><td><b>Solution: </b></td><td>{{=MARKMIN(vulninfo.f_solution)}}</td></tr>
