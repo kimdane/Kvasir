@@ -169,6 +169,7 @@ def vuln_update():
     )
 
     nexpose_config = nexpose_get_config()
+    print nexpose_config
     if form.process().accepted:
         nexpose_server = {
             'host': nexpose_config['host'],
@@ -195,7 +196,7 @@ def vuln_update():
     elif form.errors:
         response.flash = 'Error in form data'
 
-    return dict(form=form)
+    return dict(form=form,nexpose_config=nexpose_config)
 
 @auth.requires_login()
 def scan_template():
